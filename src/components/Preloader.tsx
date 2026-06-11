@@ -14,8 +14,12 @@ export function Preloader() {
   const [skipped] = useState(intro);
   const [count, setCount] = useState(0);
   const [leaving, setLeaving] = useState(false);
+  // Render nothing until mounted so SSR and the first client render match
+  // (avoids a hydration mismatch when the intro was already seen this session).
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (skipped) {
       if (!intro) completeIntro();
       return;
@@ -68,7 +72,7 @@ export function Preloader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (skipped) return null;
+  if (!mounted || skipped) return null;
 
   return (
     <AnimatePresence>
