@@ -50,9 +50,9 @@ const JARVIS: Project = {
     "A voice-activated personal AI that lives on my Mac, 24/7 — wake it with a word, talk naturally, and a cinematic HUD answers back.",
   summary:
     "A native macOS assistant inspired by Iron Man's JARVIS. It listens for a wake word, transcribes speech, reasons with Claude across 50+ tools, and replies in a custom voice — all behind an always-on-top tactical HUD.",
-  year: "2024",
+  year: "2025",
   status: "Running 24/7",
-  platform: "macOS",
+  platform: "macOS · Apple Silicon",
   // TODO(atishay): replace with the real JARVIS repo URL
   github: "https://github.com/atishayit/jarvis",
   heroVideo: { src: "/jarvis/standby.mp4", poster: "/jarvis/standby-poster.jpg" },

@@ -21,10 +21,13 @@ export function SmoothScroll() {
   useEffect(() => {
     if (reduce) return;
 
+    // lerp-based smoothing reads buttery and consistent (vs. duration easing,
+    // which can feel uneven mid-scroll). ~0.09 is smooth without feeling floaty.
     const lenis = new Lenis({
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      lerp: 0.09,
+      wheelMultiplier: 1,
       smoothWheel: true,
+      touchMultiplier: 1.6,
     });
     // Expose for the intro-pause effect below.
     (window as unknown as { __lenis?: Lenis }).__lenis = lenis;

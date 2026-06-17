@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { JarvisShowcase } from "@/components/jarvis/JarvisShowcase";
-import { getProject } from "@/content/projects";
-
-const project = getProject("jarvis");
 
 export const metadata: Metadata = {
-  title: "J.A.R.V.I.S — Voice-activated AI assistant",
+  title: "J.A.R.V.I.S — Voice-activated AI assistant for macOS",
   description:
-    "A native macOS personal AI inspired by Iron Man's JARVIS — wake word, Claude reasoning across 50+ tools, custom voice, and an animated sci-fi HUD.",
+    "A native macOS AI assistant with an Iron-Man-style holographic HUD — wake it by voice, talk naturally, and let it run your Mac, calendar and email. Comes as Jarvis or Friday.",
 };
 
 export default function JarvisPage() {
-  if (!project) notFound();
-  return <JarvisShowcase project={project} />;
+  return <JarvisShowcase />;
 }
