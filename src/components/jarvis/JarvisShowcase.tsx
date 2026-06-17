@@ -474,7 +474,7 @@ function TheInstaller() {
       style={{ height: `${shots.length * 100}vh` }}
       className="relative"
     >
-      <div className="sticky top-0 flex h-screen items-center overflow-hidden px-5 sm:px-6">
+      <div className="sticky top-0 flex h-screen items-start overflow-hidden px-5 pt-24 sm:px-6 lg:items-center lg:pt-0">
         <div className="mx-auto w-full max-w-6xl">
           <p className="jx-accent font-mono text-xs uppercase tracking-[0.3em]">
             {"// installation, reimagined"}
@@ -482,7 +482,7 @@ function TheInstaller() {
           <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold text-white sm:text-4xl">
             The installer is the experience too.
           </h2>
-          <div className="mt-8 grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="mt-6 grid items-center gap-6 lg:mt-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
             {/* step rail */}
             <ol className="order-2 space-y-2 lg:order-1">
               {shots.map((s, i) => {
@@ -490,7 +490,7 @@ function TheInstaller() {
                 return (
                   <li
                     key={s.title}
-                    className="rounded-xl border p-4 transition-all duration-300"
+                    className="rounded-xl border p-3 transition-all duration-300 lg:p-4"
                     style={{
                       borderColor: active ? "rgb(var(--j) / 0.4)" : "rgb(255 255 255 / 0.06)",
                       background: active ? "rgb(var(--j) / 0.06)" : "transparent",
