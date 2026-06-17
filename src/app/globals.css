@@ -270,6 +270,57 @@ html.lenis body {
   }
 }
 
+/* Dual-identity accent: Jarvis (cyan) ↔ Friday (amber), swapped on the .jx wrapper */
+.jx {
+  --j: 34 211 238;
+}
+.jx[data-identity="friday"] {
+  --j: 245 158 11;
+}
+.jx-accent {
+  color: rgb(var(--j));
+  transition: color 0.5s ease;
+}
+.jx-bd {
+  border-color: rgb(var(--j) / 0.22);
+  transition: border-color 0.5s ease;
+}
+.jx-bd2 {
+  border-color: rgb(var(--j) / 0.5);
+  transition: border-color 0.5s ease;
+}
+.jx-soft {
+  background-color: rgb(var(--j) / 0.08);
+  transition: background-color 0.5s ease;
+}
+.jx-soft2 {
+  background-color: rgb(var(--j) / 0.14);
+  transition: background-color 0.5s ease;
+}
+.jx-fill {
+  background-color: rgb(var(--j));
+  transition: background-color 0.5s ease;
+}
+.jx-glow {
+  background-color: rgb(var(--j) / 0.12);
+  transition: background-color 0.5s ease;
+}
+.jx-shadow {
+  box-shadow: 0 14px 50px rgb(var(--j) / 0.28);
+  transition: box-shadow 0.5s ease;
+}
+.jx-dot {
+  background-color: rgb(var(--j));
+  box-shadow: 0 0 12px rgb(var(--j) / 0.9);
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+.jx-hov {
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+.jx-hov:hover {
+  border-color: rgb(var(--j) / 0.5);
+}
+
 /* Faint HUD grid + scanlines for the project backdrop */
 .jarvis-grid {
   background-image: linear-gradient(rgb(34 211 238 / 0.05) 1px, transparent 1px),
