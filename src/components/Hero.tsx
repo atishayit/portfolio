@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   AnimatePresence,
   motion,
@@ -17,6 +19,9 @@ import { RevealText } from "./RevealText";
 import { Magnetic } from "./Magnetic";
 import { GithubIcon, LinkedinIcon } from "./icons";
 import { PERSON, ROLES } from "@/content/data";
+
+// Heavy WebGL — load client-only so it never touches SSR / the static export.
+const ParticleOrb = dynamic(() => import("./ParticleOrb"), { ssr: false });
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -39,10 +44,21 @@ const up: Variants = {
 };
 
 export function Hero() {
-  const { role, intro } = useSite();
+  const { role, theme, intro } = useSite();
   const profile = ROLES[role];
   const reduce = useReducedMotion();
   const state = intro ? "show" : "hidden";
+
+  // Only mount the WebGL orb on md+ viewports — the visual column is hidden on
+  // phones anyway, and this keeps Three.js out of the mobile bundle entirely.
+  const [showOrb, setShowOrb] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setShowOrb(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   // Pointer parallax for the portrait (desktop only).
   const mx = useMotionValue(0);
@@ -184,12 +200,53 @@ export function Hero() {
             animate={reduce ? undefined : { rotate: 360 }}
             transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
           />
-          <div className="accent-morph glass absolute inset-4 grid place-items-center overflow-hidden rounded-[1.75rem]">
-            <div className="relative grid place-items-center">
-              <span className="accent-morph bg-gradient-to-br from-accent to-accent/40 bg-clip-text font-display text-[7rem] font-bold leading-none text-transparent">
-                {PERSON.initials}
-              </span>
-            </div>
+          <div className="absolute inset-4 overflow-hidden rounded-[1.75rem] border border-hairline bg-[#05070d]">
+            {/* radial bloom — also the fallback if WebGL is unavailable */}
+            <div
+              aria-hidden="true"
+              className="accent-morph pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 46%, rgb(var(--accent) / 0.42) 0%, rgb(var(--accent) / 0.12) 32%, transparent 64%)",
+              }}
+            />
+            {/* faint HUD grid, masked to a soft vignette */}
+            <div
+              aria-hidden="true"
+              className="accent-morph pointer-events-none absolute inset-0 opacity-[0.14]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgb(var(--accent) / 0.5) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--accent) / 0.5) 1px, transparent 1px)",
+                backgroundSize: "26px 26px",
+                WebkitMaskImage:
+                  "radial-gradient(circle at 50% 46%, black, transparent 72%)",
+                maskImage:
+                  "radial-gradient(circle at 50% 46%, black, transparent 72%)",
+              }}
+            />
+
+            {/* the living orb (md+ only) */}
+            {showOrb && <ParticleOrb themeKey={`${role}-${theme}`} />}
+
+            {/* HUD corner brackets */}
+            {[
+              "left-3 top-3 border-l-2 border-t-2",
+              "right-3 top-3 border-r-2 border-t-2",
+              "bottom-3 left-3 border-b-2 border-l-2",
+              "bottom-3 right-3 border-b-2 border-r-2",
+            ].map((c) => (
+              <span
+                key={c}
+                aria-hidden="true"
+                className={`accent-morph pointer-events-none absolute h-4 w-4 border-accent/50 ${c}`}
+              />
+            ))}
+
+            {/* mono micro-label */}
+            <span className="accent-morph pointer-events-none absolute left-7 top-3.5 font-mono text-[10px] uppercase tracking-[0.25em] text-accent/70">
+              {"// neural core"}
+            </span>
+
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-hairline bg-surface/70 px-4 py-3 backdrop-blur">
               <span className="font-mono text-[11px] uppercase tracking-widest text-ink-faint">
                 Currently
