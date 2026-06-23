@@ -1,13 +1,114 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import {
+  animate,
+  motion,
+  useInView,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { ArrowLeft, ArrowUpRight, ExternalLink } from "lucide-react";
 import { Reveal, RevealGroup } from "../Reveal";
 import { GithubIcon } from "../icons";
+import { VoltaChart } from "./VoltaChart";
 import { VOLTA } from "@/content/volta";
 
 const V = VOLTA.accent; // amber "r g b"
 const V2 = VOLTA.accent2; // electric blue
+
+/** A small pulsing "live" dot. */
+function LiveDot() {
+  return (
+    <span className="relative flex h-2 w-2">
+      <span
+        className="absolute inline-flex h-full w-full animate-ping rounded-full"
+        style={{ background: `rgb(${V})`, opacity: 0.7 }}
+      />
+      <span
+        className="relative inline-flex h-2 w-2 rounded-full"
+        style={{ background: `rgb(${V})` }}
+      />
+    </span>
+  );
+}
+
+/** Counts a numeric value up from zero when scrolled into view. */
+function CountUp({ value }: { value: string }) {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const m = value.match(/^(\D*)(-?[\d.]+)(.*)$/);
+  const target = m ? parseFloat(m[2]) : 0;
+  const decimals = m && m[2].includes(".") ? m[2].split(".")[1].length : 0;
+  const [disp, setDisp] = useState(0);
+
+  useEffect(() => {
+    if (!m) return;
+    if (reduce || !inView) {
+      setDisp(target);
+      return;
+    }
+    const controls = animate(0, target, {
+      duration: 1.3,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (v) => setDisp(v),
+    });
+    return () => controls.stop();
+  }, [inView, reduce, target, m]);
+
+  if (!m) return <span ref={ref}>{value}</span>;
+  return (
+    <span ref={ref}>
+      {m[1]}
+      {disp.toFixed(decimals)}
+      {m[3]}
+    </span>
+  );
+}
+
+/** Subtle pointer-driven 3D tilt wrapper. */
+function Tilt({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rx = useSpring(useTransform(my, [-0.5, 0.5], [5, -5]), {
+    stiffness: 150,
+    damping: 18,
+  });
+  const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-5, 5]), {
+    stiffness: 150,
+    damping: 18,
+  });
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (reduce) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  };
+  return (
+    <motion.div
+      onMouseMove={onMove}
+      onMouseLeave={() => {
+        mx.set(0);
+        my.set(0);
+      }}
+      style={reduce ? undefined : { rotateX: rx, rotateY: ry, transformPerspective: 1200 }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 /** Amber HUD corner brackets around a framed element. */
 function Brackets() {
@@ -166,7 +267,7 @@ function Hero() {
                 className="font-display text-3xl font-bold"
                 style={{ color: `rgb(${V})` }}
               >
-                {m.value}
+                <CountUp value={m.value} />
               </p>
               <p className="mt-1 text-xs leading-snug text-slate-500">{m.label}</p>
             </div>
@@ -174,25 +275,48 @@ function Hero() {
         ))}
       </RevealGroup>
 
+      {/* live forecast readout — animated signature */}
+      <Reveal delay={0.05} className="mt-10">
+        <div
+          className="relative overflow-hidden rounded-2xl border bg-[#070b14] p-4 sm:p-5"
+          style={{ borderColor: `rgb(${V} / 0.2)` }}
+        >
+          <div className="mb-1 flex items-center justify-between">
+            <span
+              className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest"
+              style={{ color: `rgb(${V})` }}
+            >
+              <LiveDot /> 24h demand forecast
+            </span>
+            <span className="font-mono text-[11px] text-slate-600">
+              actual <span style={{ color: `rgb(${V2})` }}>→ forecast</span>
+            </span>
+          </div>
+          <VoltaChart className="h-40 w-full sm:h-52" />
+        </div>
+      </Reveal>
+
       {/* hero screenshot */}
-      <Reveal delay={0.1} className="mt-12">
-        <div className="relative">
+      <Reveal delay={0.1} className="mt-6">
+        <div className="relative [perspective:1200px]">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -inset-3 rounded-[2rem] blur-2xl"
             style={{ background: `rgb(${V} / 0.12)` }}
           />
-          <div
-            className="relative overflow-hidden rounded-2xl border bg-black"
-            style={{ borderColor: `rgb(${V} / 0.25)` }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={VOLTA.shots.hero}
-              alt="VOLTA dashboard — forecast and what-if simulator"
-              className="w-full"
-            />
-          </div>
+          <Tilt>
+            <div
+              className="relative overflow-hidden rounded-2xl border bg-black"
+              style={{ borderColor: `rgb(${V} / 0.25)` }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={VOLTA.shots.hero}
+                alt="VOLTA dashboard — forecast and what-if simulator"
+                className="w-full"
+              />
+            </div>
+          </Tilt>
           <Brackets />
         </div>
       </Reveal>
@@ -232,6 +356,12 @@ function LiveDemo() {
               <span className="h-3 w-3 rounded-full bg-white/15" />
               <span className="ml-3 truncate font-mono text-xs text-slate-500">
                 volta-virid.vercel.app
+              </span>
+              <span
+                className="ml-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider"
+                style={{ color: `rgb(${V})`, background: `rgb(${V} / 0.1)` }}
+              >
+                <LiveDot /> live
               </span>
               <a
                 href={VOLTA.demo}

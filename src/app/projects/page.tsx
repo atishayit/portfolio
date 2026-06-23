@@ -4,6 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Background } from "@/components/Background";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { VoltaChart } from "@/components/volta/VoltaChart";
 import { PROJECTS } from "@/content/projects";
 
 export const metadata: Metadata = {
@@ -94,12 +95,37 @@ export default function ProjectsPage() {
                       className="overflow-hidden rounded-2xl border"
                       style={{ borderColor: `rgb(${accent} / 0.25)` }}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={p.bootVideo.poster}
-                        alt={`${p.name} preview`}
-                        className="aspect-square w-full object-cover"
-                      />
+                      {p.slug === "volta" ? (
+                        <div className="relative grid aspect-square w-full place-items-center overflow-hidden bg-[#070b14] px-3">
+                          <span
+                            className="absolute left-3 top-3 inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-widest"
+                            style={{ color: `rgb(${accent})` }}
+                          >
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span
+                                className="absolute inline-flex h-full w-full animate-ping rounded-full"
+                                style={{ background: `rgb(${accent})`, opacity: 0.7 }}
+                              />
+                              <span
+                                className="relative inline-flex h-1.5 w-1.5 rounded-full"
+                                style={{ background: `rgb(${accent})` }}
+                              />
+                            </span>
+                            live
+                          </span>
+                          <VoltaChart className="w-full" />
+                          <span className="absolute bottom-3 left-3 font-mono text-[9px] uppercase tracking-widest text-slate-600">
+                            24h forecast
+                          </span>
+                        </div>
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.bootVideo.poster}
+                          alt={`${p.name} preview`}
+                          className="aspect-square w-full object-cover"
+                        />
+                      )}
                     </div>
                     {["left-0 top-0 border-l-2 border-t-2", "right-0 top-0 border-r-2 border-t-2", "bottom-0 left-0 border-b-2 border-l-2", "bottom-0 right-0 border-b-2 border-r-2"].map(
                       (c, i) => (
