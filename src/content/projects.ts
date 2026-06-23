@@ -31,6 +31,10 @@ export interface Project {
   status: string;
   platform: string;
   github: string;
+  /** Card identity accent as an "r g b" triplet (defaults to JARVIS cyan). */
+  accent?: string;
+  /** Live, embeddable demo URL, if the project has one. */
+  demo?: string;
   /** Calm standby loop shown in the hero */
   heroVideo: { src: string; poster: string };
   /** Full power-on sequence shown in the capabilities showcase */
@@ -53,6 +57,7 @@ const JARVIS: Project = {
   year: "2025",
   status: "Running 24/7",
   platform: "macOS · Apple Silicon",
+  accent: "34 211 238", // cyan
   // TODO(atishay): replace with the real JARVIS repo URL
   github: "https://github.com/atishayit/jarvis",
   heroVideo: { src: "/jarvis/standby.mp4", poster: "/jarvis/standby-poster.jpg" },
@@ -154,7 +159,32 @@ const JARVIS: Project = {
   ],
 };
 
-export const PROJECTS: Project[] = [JARVIS];
+// Index-card data only — VOLTA's showcase page is driven by src/content/volta.ts.
+const VOLTA: Project = {
+  slug: "volta",
+  name: "VOLTA",
+  full: "Energy Forecasting & Anomaly Control Room",
+  tagline:
+    "A deep-learning control room for the power grid — it forecasts the next 24 hours of energy demand, flags anomalies, and re-forecasts live in your browser as you change the weather.",
+  summary:
+    "An end-to-end energy-forecasting app on real PJM grid data and weather. A CNN-BiLSTM predicts 24h-ahead demand across three zones, a z-score detector flags anomalies, and a what-if simulator runs the model entirely in-browser via ONNX — no server, $0 hosting.",
+  year: "2026",
+  status: "Live",
+  platform: "Web · Static export",
+  accent: "255 176 32", // amber
+  demo: "https://volta-virid.vercel.app",
+  github: "https://github.com/atishayit/volta",
+  heroVideo: { src: "", poster: "/volta/hero.png" },
+  bootVideo: { src: "", poster: "/volta/hero.png" },
+  // Showcase content for /projects/volta lives in src/content/volta.ts.
+  bootLog: [],
+  steps: [],
+  showcase: [],
+  features: [],
+  tech: [],
+};
+
+export const PROJECTS: Project[] = [JARVIS, VOLTA];
 
 export function getProject(slug: string): Project | undefined {
   return PROJECTS.find((p) => p.slug === slug);
