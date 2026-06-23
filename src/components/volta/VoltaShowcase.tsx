@@ -41,31 +41,39 @@ function CountUp({ value }: { value: string }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
-  const m = value.match(/^(\D*)(-?[\d.]+)(.*)$/);
-  const target = m ? parseFloat(m[2]) : 0;
-  const decimals = m && m[2].includes(".") ? m[2].split(".")[1].length : 0;
+  // Accept an ASCII or Unicode minus in the numeric part.
+  const m = value.match(/^(\D*?)(-?−?[\d.]+)(.*)$/);
+  const prefix = m ? m[1] : "";
+  const numStr = m ? m[2].replace("−", "-") : "";
+  const suffix = m ? m[3] : "";
+  const target = numStr ? parseFloat(numStr) : 0;
+  const decimals = numStr.includes(".") ? numStr.split(".")[1].length : 0;
+  const sign = numStr.trim().startsWith("-") ? "−" : "";
   const [disp, setDisp] = useState(0);
 
+  // Depend only on primitives — `m` is a fresh array each render and would
+  // otherwise restart the animation on every setDisp tick (twitch + stuck near 0).
   useEffect(() => {
-    if (!m) return;
+    if (!numStr) return;
     if (reduce || !inView) {
-      setDisp(target);
+      setDisp(Math.abs(target));
       return;
     }
-    const controls = animate(0, target, {
+    const controls = animate(0, Math.abs(target), {
       duration: 1.3,
       ease: [0.22, 1, 0.36, 1],
       onUpdate: (v) => setDisp(v),
     });
     return () => controls.stop();
-  }, [inView, reduce, target, m]);
+  }, [inView, reduce, target, numStr]);
 
   if (!m) return <span ref={ref}>{value}</span>;
   return (
     <span ref={ref}>
-      {m[1]}
+      {prefix}
+      {sign}
       {disp.toFixed(decimals)}
-      {m[3]}
+      {suffix}
     </span>
   );
 }
