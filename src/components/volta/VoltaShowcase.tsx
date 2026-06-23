@@ -15,6 +15,7 @@ import { ArrowLeft, ArrowUpRight, ExternalLink } from "lucide-react";
 import { Reveal, RevealGroup } from "../Reveal";
 import { GithubIcon } from "../icons";
 import { VoltaChart } from "./VoltaChart";
+import { VoltaModelDiagram } from "./VoltaModelDiagram";
 import { VOLTA } from "@/content/volta";
 
 const V = VOLTA.accent; // amber "r g b"
@@ -450,18 +451,53 @@ function Model() {
   const sc = VOLTA.model.scorecard;
   return (
     <section className="border-t border-white/5 py-20">
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+      <Reveal>
+        <Kicker>{"// the model"}</Kicker>
+      </Reveal>
+      <Reveal delay={0.05}>
+        <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold text-white sm:text-4xl">
+          A CNN-BiLSTM that learns the grid&apos;s rhythm.
+        </h2>
+      </Reveal>
+
+      {/* animated architecture diagram — the showpiece */}
+      <Reveal delay={0.1} className="mt-10">
+        <div className="group relative">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-2 rounded-[2rem] blur-2xl transition-opacity duration-500"
+            style={{ background: `rgb(${V} / 0.1)` }}
+          />
+          <div
+            className="relative overflow-hidden rounded-2xl border bg-[#070b14]/80 px-2 py-4 sm:px-6 sm:py-6"
+            style={{
+              borderColor: `rgb(${V} / 0.22)`,
+              backgroundImage:
+                "linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px)",
+              backgroundSize: "30px 30px",
+            }}
+          >
+            <div className="mb-1 flex items-center justify-between px-2">
+              <span
+                className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest"
+                style={{ color: `rgb(${V})` }}
+              >
+                <LiveDot /> architecture
+              </span>
+              <span className="font-mono text-[11px] text-slate-600">
+                window <span style={{ color: `rgb(${V2})` }}>→ 24h forecast</span>
+              </span>
+            </div>
+            <VoltaModelDiagram className="h-[220px] w-full sm:h-[300px]" />
+          </div>
+          <Brackets />
+        </div>
+      </Reveal>
+
+      <div className="mt-12 grid gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <Reveal>
-            <Kicker>{"// the model"}</Kicker>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <h2 className="mt-3 font-display text-3xl font-semibold text-white sm:text-4xl">
-              A CNN-BiLSTM that learns the grid&apos;s rhythm.
-            </h2>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-5 text-base leading-relaxed text-slate-400">
+            <p className="text-base leading-relaxed text-slate-400">
               {VOLTA.model.blurb}
             </p>
           </Reveal>
