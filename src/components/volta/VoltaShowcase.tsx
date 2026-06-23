@@ -15,7 +15,6 @@ import { ArrowLeft, ArrowUpRight, ExternalLink } from "lucide-react";
 import { Reveal, RevealGroup } from "../Reveal";
 import { GithubIcon } from "../icons";
 import { VoltaChart } from "./VoltaChart";
-import { VoltaModelDiagram } from "./VoltaModelDiagram";
 import { VOLTA } from "@/content/volta";
 
 const V = VOLTA.accent; // amber "r g b"
@@ -137,6 +136,42 @@ function Brackets() {
         />
       ))}
     </>
+  );
+}
+
+/** A block that lifts (with a springy ease), glows and sweeps a sheen on hover. */
+function Card({
+  children,
+  className = "",
+  glow = V,
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  glow?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className={`group relative h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] will-change-transform hover:-translate-y-1.5 motion-reduce:transform-none motion-reduce:transition-none ${className}`}
+      style={style}
+    >
+      {/* inner ring + drop glow that fade in on hover */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          boxShadow: `inset 0 0 0 1px rgb(${glow} / 0.45), 0 22px 60px -20px rgb(${glow} / 0.5)`,
+        }}
+      />
+      {/* diagonal sheen that sweeps across on hover */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-1/3 top-0 h-full w-1/3 -translate-x-[160%] skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[420%] motion-reduce:hidden"
+      />
+      {/* content sits above the overlays */}
+      <div className="relative h-full">{children}</div>
+    </div>
   );
 }
 
@@ -427,7 +462,7 @@ function Pipeline() {
       <RevealGroup className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {VOLTA.steps.map((s) => (
           <Reveal key={s.label}>
-            <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <Card className="p-6">
               <p
                 className="font-mono text-xs uppercase tracking-widest"
                 style={{ color: `rgb(${V})` }}
@@ -439,7 +474,7 @@ function Pipeline() {
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-400">{s.desc}</p>
               <p className="mt-4 font-mono text-xs text-slate-600">{s.tech}</p>
-            </div>
+            </Card>
           </Reveal>
         ))}
       </RevealGroup>
@@ -451,53 +486,18 @@ function Model() {
   const sc = VOLTA.model.scorecard;
   return (
     <section className="border-t border-white/5 py-20">
-      <Reveal>
-        <Kicker>{"// the model"}</Kicker>
-      </Reveal>
-      <Reveal delay={0.05}>
-        <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold text-white sm:text-4xl">
-          A CNN-BiLSTM that learns the grid&apos;s rhythm.
-        </h2>
-      </Reveal>
-
-      {/* animated architecture diagram — the showpiece */}
-      <Reveal delay={0.1} className="mt-10">
-        <div className="group relative">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -inset-2 rounded-[2rem] blur-2xl transition-opacity duration-500"
-            style={{ background: `rgb(${V} / 0.1)` }}
-          />
-          <div
-            className="relative overflow-hidden rounded-2xl border bg-[#070b14]/80 px-2 py-4 sm:px-6 sm:py-6"
-            style={{
-              borderColor: `rgb(${V} / 0.22)`,
-              backgroundImage:
-                "linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px)",
-              backgroundSize: "30px 30px",
-            }}
-          >
-            <div className="mb-1 flex items-center justify-between px-2">
-              <span
-                className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest"
-                style={{ color: `rgb(${V})` }}
-              >
-                <LiveDot /> architecture
-              </span>
-              <span className="font-mono text-[11px] text-slate-600">
-                window <span style={{ color: `rgb(${V2})` }}>→ 24h forecast</span>
-              </span>
-            </div>
-            <VoltaModelDiagram className="h-[220px] w-full sm:h-[300px]" />
-          </div>
-          <Brackets />
-        </div>
-      </Reveal>
-
-      <div className="mt-12 grid gap-12 lg:grid-cols-2 lg:gap-16">
+      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
           <Reveal>
-            <p className="text-base leading-relaxed text-slate-400">
+            <Kicker>{"// the model"}</Kicker>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <h2 className="mt-3 font-display text-3xl font-semibold text-white sm:text-4xl">
+              A CNN-BiLSTM that learns the grid&apos;s rhythm.
+            </h2>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="mt-5 text-base leading-relaxed text-slate-400">
               {VOLTA.model.blurb}
             </p>
           </Reveal>
@@ -505,7 +505,7 @@ function Model() {
 
         <div>
           <Reveal>
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+            <div className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-shadow duration-300 hover:shadow-[0_22px_60px_-24px_rgb(255_176_32/0.4)]">
               <div className="border-b border-white/10 px-5 py-3">
                 <p className="font-mono text-xs uppercase tracking-widest text-slate-500">
                   Model scorecard · {sc.caption}
@@ -525,7 +525,7 @@ function Model() {
                   {sc.rows.map((r) => (
                     <tr
                       key={r.cells[0]}
-                      className="border-t border-white/5"
+                      className="group/row border-t border-white/5 transition-colors duration-200 hover:bg-[rgb(255_176_32/0.09)]"
                       style={
                         r.highlight
                           ? { background: `rgb(${V} / 0.06)` }
@@ -535,7 +535,7 @@ function Model() {
                       {r.cells.map((c, i) => (
                         <td
                           key={i}
-                          className={`px-4 py-3 ${i === 0 ? "font-semibold" : "font-mono"}`}
+                          className={`px-4 py-3 transition-colors duration-200 ${i === 0 ? "font-semibold group-hover/row:text-[rgb(255_176_32)]" : "font-mono"}`}
                           style={
                             r.highlight && i === 0
                               ? { color: `rgb(${V})` }
@@ -555,8 +555,8 @@ function Model() {
           </Reveal>
 
           <Reveal delay={0.08}>
-            <div
-              className="mt-4 rounded-2xl border p-5"
+            <Card
+              className="mt-4 p-5"
               style={{
                 borderColor: `rgb(${V} / 0.2)`,
                 background: `rgb(${V} / 0.04)`,
@@ -565,7 +565,7 @@ function Model() {
               <p className="text-sm leading-relaxed text-slate-300">
                 {VOLTA.model.story}
               </p>
-            </div>
+            </Card>
           </Reveal>
         </div>
       </div>
@@ -582,12 +582,12 @@ function Features() {
       <RevealGroup className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {VOLTA.features.map((f) => (
           <Reveal key={f.title}>
-            <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <Card className="p-6">
               <h3 className="font-display text-lg font-semibold text-white">
                 {f.title}
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-400">{f.desc}</p>
-            </div>
+            </Card>
           </Reveal>
         ))}
       </RevealGroup>
@@ -609,7 +609,7 @@ function Tech() {
       <RevealGroup className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {VOLTA.tech.map((t) => (
           <Reveal key={t.group}>
-            <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <Card className="p-6">
               <p
                 className="font-mono text-xs uppercase tracking-widest"
                 style={{ color: `rgb(${V})` }}
@@ -623,7 +623,7 @@ function Tech() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </Card>
           </Reveal>
         ))}
       </RevealGroup>
