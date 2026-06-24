@@ -6,6 +6,7 @@ import {
   AnimatePresence,
   motion,
   useMotionValueEvent,
+  useReducedMotion,
   useScroll,
 } from "framer-motion";
 import {
@@ -51,6 +52,7 @@ export function JarvisShowcase() {
       className="jx relative min-h-screen bg-[#04060b] text-slate-300"
       data-identity={identity}
     >
+      <AuroraCyber />
       <div aria-hidden="true" className="jarvis-grid pointer-events-none fixed inset-0" />
       <div
         aria-hidden="true"
@@ -72,6 +74,54 @@ export function JarvisShowcase() {
       <UnderTheHood />
       <DownloadSection id={id} />
       <Foot />
+    </div>
+  );
+}
+
+/** Animated aurora over the cyber grid — drifting accent + violet glows and a
+ *  slow conic sheen. Themed to the active identity via the `--j` accent var. */
+function AuroraCyber() {
+  const reduce = useReducedMotion();
+  if (reduce) return null;
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 overflow-hidden"
+    >
+      <motion.div
+        className="absolute -top-1/4 left-[18%] h-[46rem] w-[46rem] rounded-full opacity-30 mix-blend-screen blur-[140px]"
+        style={{
+          background: "radial-gradient(circle, rgb(var(--j) / 0.6), transparent 65%)",
+        }}
+        animate={{ x: [0, 120, -40, 0], y: [0, 60, -30, 0], scale: [1, 1.15, 0.95, 1] }}
+        transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute bottom-[-18%] right-[6%] h-[40rem] w-[40rem] rounded-full opacity-25 mix-blend-screen blur-[150px]"
+        style={{
+          background: "radial-gradient(circle, rgb(124 92 255 / 0.5), transparent 65%)",
+        }}
+        animate={{ x: [0, -100, 40, 0], y: [0, -50, 30, 0], scale: [1, 1.2, 1] }}
+        transition={{ duration: 34, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute left-[-12%] top-[34%] h-[32rem] w-[32rem] rounded-full opacity-20 mix-blend-screen blur-[130px]"
+        style={{
+          background: "radial-gradient(circle, rgb(var(--j) / 0.5), transparent 60%)",
+        }}
+        animate={{ x: [0, 90, 0], y: [0, 40, 0] }}
+        transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {/* slow conic sheen for a techy shimmer over everything */}
+      <motion.div
+        className="absolute left-1/2 top-1/2 h-[140vmax] w-[140vmax] -translate-x-1/2 -translate-y-1/2 opacity-[0.06]"
+        style={{
+          background:
+            "conic-gradient(from 0deg, transparent, rgb(var(--j) / 0.6) 12%, transparent 30%)",
+        }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 70, repeat: Infinity, ease: "linear" }}
+      />
     </div>
   );
 }
@@ -309,29 +359,102 @@ function Meet({ setIdentity }: { setIdentity: (i: Identity) => void }) {
   );
 }
 
+// Bento span per feature index (mic / music get the big tiles).
+const BENTO: Record<number, string> = {
+  0: "lg:col-span-2 lg:row-span-2", // Voice-first
+  1: "lg:col-span-2", // Runs your Mac
+  5: "lg:col-span-2 lg:row-span-2", // Music
+  6: "lg:col-span-2", // Knowledge & chat
+};
+
+/** Animated motif for the big audio tiles (equalizer / waveform). */
+function BentoBars({ count = 9 }: { count?: number }) {
+  return (
+    <div className="mt-5 flex items-end gap-1.5" aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <motion.span
+          key={i}
+          className="w-2 rounded-full"
+          style={{ height: 30, background: "rgb(var(--j) / 0.8)", transformOrigin: "bottom" }}
+          animate={{ scaleY: [0.35, 1, 0.55, 0.9, 0.4] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.09 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function BentoCard({
+  f,
+  i,
+}: {
+  f: (typeof JARVIS.features)[number];
+  i: number;
+}) {
+  const Icon = FEATURE_ICONS[f.icon] ?? Sparkles;
+  const big = i === 0 || i === 5;
+  // Optional real image (drop a PNG into /public and set `img` on the feature).
+  const img = (f as { img?: string }).img;
+  return (
+    <Reveal className={`h-full ${BENTO[i] ?? ""}`} delay={(i % 3) * 0.05}>
+      <div className="jx-bd group relative flex h-full flex-col justify-end overflow-hidden rounded-2xl border bg-white/[0.02] p-5 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-1.5">
+        {/* optional image art */}
+        {img && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={img}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-25 transition-opacity duration-500 group-hover:opacity-40"
+          />
+        )}
+        {/* accent glow that warms on hover */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20 blur-2xl transition-opacity duration-500 group-hover:opacity-50"
+          style={{ background: "rgb(var(--j) / 0.7)" }}
+        />
+        {/* oversized ghost icon */}
+        <Icon
+          aria-hidden="true"
+          strokeWidth={1}
+          className="absolute -bottom-5 -right-4 h-28 w-28 text-white/[0.045] transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-105"
+        />
+        {/* hover sheen sweep */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-1/3 top-0 h-full w-1/3 -translate-x-[220%] skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[460%]"
+        />
+
+        <div className="relative flex h-full flex-col">
+          <span className="jx-soft jx-accent grid h-11 w-11 place-items-center rounded-xl">
+            <Icon size={20} />
+          </span>
+          {big && <BentoBars count={i === 5 ? 11 : 7} />}
+          <div className="mt-auto pt-5">
+            <h3 className="font-display text-lg font-semibold text-white">{f.title}</h3>
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-400">{f.desc}</p>
+          </div>
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
 function WhatItDoes() {
   return (
-    <section className="relative mx-auto max-w-6xl px-5 py-24 sm:px-6 sm:py-28">
+    <section
+      id="capabilities"
+      className="relative mx-auto max-w-6xl scroll-mt-24 px-5 py-24 sm:px-6 sm:py-28"
+    >
       <SectionHead
         kicker="// capabilities"
         title="What it actually does."
         intro="Not a chatbot in a tab — a desktop presence that runs your machine and your day."
       />
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {JARVIS.features.map((f, i) => {
-          const Icon = FEATURE_ICONS[f.icon] ?? Sparkles;
-          return (
-            <Reveal key={f.title} delay={(i % 3) * 0.06}>
-              <div className="jx-bd jx-hov group h-full rounded-2xl border bg-white/[0.02] p-5 transition-all duration-300 hover:-translate-y-1">
-                <span className="jx-soft jx-accent grid h-11 w-11 place-items-center rounded-xl">
-                  <Icon size={20} />
-                </span>
-                <h3 className="mt-4 font-display text-lg font-semibold text-white">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">{f.desc}</p>
-              </div>
-            </Reveal>
-          );
-        })}
+      <div className="mt-12 grid auto-rows-[168px] grid-flow-dense gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {JARVIS.features.map((f, i) => (
+          <BentoCard key={f.title} f={f} i={i} />
+        ))}
       </div>
     </section>
   );
