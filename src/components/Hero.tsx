@@ -22,6 +22,8 @@ import { PERSON, ROLES } from "@/content/data";
 
 // Heavy WebGL — load client-only so it never touches SSR / the static export.
 const ParticleOrb = dynamic(() => import("./ParticleOrb"), { ssr: false });
+// Accent-coloured particle constellation behind the hero (client-only).
+const HeroParticles = dynamic(() => import("./HeroParticles"), { ssr: false });
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -79,9 +81,23 @@ export function Hero() {
   return (
     <section
       onMouseMove={handlePointer}
-      className="relative flex min-h-[100svh] items-center px-5 pb-16 pt-28 sm:px-8 sm:pt-32"
+      className="relative flex min-h-[100svh] items-center overflow-hidden px-5 pb-16 pt-28 sm:px-8 sm:pt-32"
     >
-      <div className="mx-auto grid w-full max-w-container items-center gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8">
+      {/* particle constellation — soft-masked so it never fights the text */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          WebkitMaskImage:
+            "radial-gradient(120% 90% at 50% 40%, black 55%, transparent 100%)",
+          maskImage:
+            "radial-gradient(120% 90% at 50% 40%, black 55%, transparent 100%)",
+        }}
+      >
+        <HeroParticles />
+      </div>
+
+      <div className="relative z-10 mx-auto grid w-full max-w-container items-center gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8">
         {/* ---- Left: identity ---- */}
         <motion.div variants={container} initial="hidden" animate={state}>
           <motion.div

@@ -8,6 +8,7 @@ import {
   useInView,
   useMotionValue,
   useReducedMotion,
+  useScroll,
   useSpring,
   useTransform,
 } from "framer-motion";
@@ -256,6 +257,59 @@ function Nav() {
   );
 }
 
+/** The dashboard screenshot, scroll-scrubbed: tilts up from the page and
+ *  flattens + scales to full as it enters — an Apple-style product reveal. */
+function HeroShot() {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start 0.92", "start 0.3"],
+  });
+  const rotateX = useTransform(scrollYProgress, [0, 1], [22, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [0.88, 1]);
+  const y = useTransform(scrollYProgress, [0, 1], [60, 0]);
+  const opacity = useTransform(scrollYProgress, [0, 1], [0.25, 1]);
+  return (
+    <div ref={ref} className="relative mt-6 [perspective:1500px]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-3 rounded-[2rem] blur-2xl"
+        style={{ background: `rgb(${V} / 0.12)` }}
+      />
+      <motion.div
+        style={
+          reduce
+            ? undefined
+            : {
+                rotateX,
+                scale,
+                y,
+                opacity,
+                transformPerspective: 1500,
+                transformOrigin: "50% 100%",
+              }
+        }
+      >
+        <Tilt>
+          <div
+            className="relative overflow-hidden rounded-2xl border bg-black"
+            style={{ borderColor: `rgb(${V} / 0.25)` }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={VOLTA.shots.hero}
+              alt="VOLTA dashboard — forecast and what-if simulator"
+              className="w-full"
+            />
+          </div>
+        </Tilt>
+      </motion.div>
+      <Brackets />
+    </div>
+  );
+}
+
 function Hero() {
   return (
     <section className="pb-16 pt-28 sm:pt-36">
@@ -340,30 +394,8 @@ function Hero() {
         </div>
       </Reveal>
 
-      {/* hero screenshot */}
-      <Reveal delay={0.1} className="mt-6">
-        <div className="relative [perspective:1200px]">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -inset-3 rounded-[2rem] blur-2xl"
-            style={{ background: `rgb(${V} / 0.12)` }}
-          />
-          <Tilt>
-            <div
-              className="relative overflow-hidden rounded-2xl border bg-black"
-              style={{ borderColor: `rgb(${V} / 0.25)` }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={VOLTA.shots.hero}
-                alt="VOLTA dashboard — forecast and what-if simulator"
-                className="w-full"
-              />
-            </div>
-          </Tilt>
-          <Brackets />
-        </div>
-      </Reveal>
+      {/* hero screenshot — Apple-style: rises and flattens as you scroll */}
+      <HeroShot />
     </section>
   );
 }
