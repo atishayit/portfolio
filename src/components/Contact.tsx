@@ -25,7 +25,7 @@ export function Contact() {
   return (
     <Section
       id="contact"
-      index="07 / Contact"
+      index="09 / Contact"
       title="Let's build something."
       intro="Open to full-stack and data science roles, collaborations, and interesting problems. The fastest way to reach me is email."
     >

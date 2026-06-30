@@ -100,7 +100,7 @@ export function Education() {
   return (
     <Section
       id="education"
-      index="06 / Education"
+      index="07 / Education"
       title="Academic foundation."
       intro="High distinction across both degrees — the grounding behind the engineering and the science."
     >
