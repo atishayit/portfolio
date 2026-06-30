@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   AnimatePresence,
@@ -14,7 +15,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Calendar,
-  Check,
   Fingerprint,
   Mail,
   Mic,
@@ -26,8 +26,16 @@ import {
 } from "lucide-react";
 import { JarvisVideo } from "./JarvisVideo";
 import { BentoCard } from "./JarvisBento";
+import { JarvisBoot } from "./JarvisBoot";
+import { NeuralField } from "./NeuralField";
+import { JarvisCursor } from "./JarvisCursor";
+import { JarvisTerminal } from "./JarvisTerminal";
+import { Waveform } from "./Waveform";
 import { Reveal } from "@/components/Reveal";
 import { IDENTITIES, JARVIS, type Identity } from "@/content/jarvis";
+
+// Heavy WebGL core — client-only, mounted on md+ (see Hero).
+const JarvisCore = dynamic(() => import("./JarvisCore"), { ssr: false });
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const SPRING = { type: "spring", stiffness: 380, damping: 32 } as const;
@@ -44,15 +52,41 @@ const FEATURE_ICONS: Record<string, LucideIcon> = {
   fingerprint: Fingerprint,
 };
 
+/** Holographic scan-in reveal — a left-to-right clip wipe with a leading glow. */
+function HoloReveal({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  if (reduce) return <div className={className}>{children}</div>;
+  return (
+    <motion.div
+      className={`relative ${className ?? ""}`}
+      initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0.4 }}
+      whileInView={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.85, delay, ease: EASE }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function JarvisShowcase() {
   const [identity, setIdentity] = useState<Identity>("jarvis");
-  const id = IDENTITIES[identity];
 
   return (
     <div
       className="jx relative min-h-screen bg-[#04060b] text-slate-300"
       data-identity={identity}
     >
+      <JarvisBoot />
+      <NeuralField />
       <AuroraCyber />
       <div aria-hidden="true" className="jarvis-grid pointer-events-none fixed inset-0" />
       <div
@@ -73,8 +107,9 @@ export function JarvisShowcase() {
       <TheHud />
       <TheInstaller />
       <UnderTheHood />
-      <DownloadSection id={id} />
+      <JarvisTerminal />
       <Foot />
+      <JarvisCursor />
     </div>
   );
 }
@@ -196,6 +231,15 @@ function Nav({ identity, setIdentity }: { identity: Identity; setIdentity: (i: I
 
 function Hero({ identity, setIdentity }: { identity: Identity; setIdentity: (i: Identity) => void }) {
   const id = IDENTITIES[identity];
+  // Mount the WebGL core on md+ only — phones get the static ring/glow fallback.
+  const [showCore, setShowCore] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const u = () => setShowCore(mq.matches);
+    u();
+    mq.addEventListener("change", u);
+    return () => mq.removeEventListener("change", u);
+  }, []);
   return (
     <section className="relative mx-auto flex min-h-screen max-w-6xl items-center px-5 pb-20 pt-28 sm:px-6">
       <div className="grid w-full items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
@@ -245,13 +289,52 @@ function Hero({ identity, setIdentity }: { identity: Identity; setIdentity: (i: 
         </div>
 
         <Reveal delay={0.1} className="relative mx-auto w-full max-w-md">
-          <JarvisVideo
-            src={JARVIS.media.standby.src}
-            poster={JARVIS.media.standby.poster}
-            label="● Standby"
-            aspect="square"
-            ambient
-          />
+          <div className="relative aspect-square">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-[28%] rounded-full blur-3xl"
+              style={{ background: "rgb(var(--j) / 0.18)" }}
+            />
+            <motion.div
+              aria-hidden="true"
+              className="absolute inset-2 rounded-full border border-dashed"
+              style={{ borderColor: "rgb(var(--j) / 0.2)" }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 38, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              aria-hidden="true"
+              className="absolute inset-14 rounded-full border"
+              style={{ borderColor: "rgb(var(--j) / 0.12)" }}
+              animate={{ rotate: -360 }}
+              transition={{ duration: 52, repeat: Infinity, ease: "linear" }}
+            />
+            {showCore && <JarvisCore identityKey={identity} />}
+            <span
+              className="absolute left-2 top-2 font-mono text-[10px] uppercase tracking-[0.25em]"
+              style={{ color: "rgb(var(--j) / 0.8)" }}
+            >
+              {"● neural core"}
+            </span>
+            <span
+              className="absolute bottom-2 right-2 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-600"
+            >
+              live
+            </span>
+            {[
+              "left-0 top-0 border-l-2 border-t-2",
+              "right-0 top-0 border-r-2 border-t-2",
+              "bottom-0 left-0 border-b-2 border-l-2",
+              "bottom-0 right-0 border-b-2 border-r-2",
+            ].map((c) => (
+              <span
+                key={c}
+                aria-hidden="true"
+                className={`pointer-events-none absolute h-5 w-5 ${c}`}
+                style={{ borderColor: "rgb(var(--j) / 0.5)" }}
+              />
+            ))}
+          </div>
         </Reveal>
       </div>
     </section>
@@ -272,11 +355,11 @@ function SectionHead({
       <Reveal>
         <p className="jx-accent font-mono text-xs uppercase tracking-[0.3em]">{kicker}</p>
       </Reveal>
-      <Reveal delay={0.05}>
+      <HoloReveal delay={0.05}>
         <h2 className="mt-4 font-display text-4xl font-semibold text-white sm:text-5xl">
           {title}
         </h2>
-      </Reveal>
+      </HoloReveal>
       {intro && (
         <Reveal delay={0.1}>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
@@ -285,6 +368,88 @@ function SectionHead({
         </Reveal>
       )}
     </>
+  );
+}
+
+/** Sets --mx/--my on the element for a cursor-following spotlight. */
+function useGlow<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const onMouseMove = (e: React.MouseEvent<T>) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    el.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+  return { ref, onMouseMove };
+}
+
+function MeetCard({
+  c,
+  setIdentity,
+}: {
+  c: { key: Identity; hex: string; available: boolean };
+  setIdentity: (i: Identity) => void;
+}) {
+  const p = IDENTITIES[c.key];
+  const { ref, onMouseMove } = useGlow<HTMLButtonElement>();
+  return (
+    <Reveal>
+      <button
+        ref={ref}
+        onMouseMove={onMouseMove}
+        type="button"
+        onClick={() => setIdentity(c.key)}
+        className="group relative block h-full w-full overflow-hidden rounded-3xl border bg-white/[0.02] p-7 text-left transition-all duration-300 hover:-translate-y-1"
+        style={{ borderColor: `rgb(${c.hex} / 0.3)` }}
+      >
+        {/* cursor spotlight */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{
+            background: `radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgb(${c.hex} / 0.16), transparent 60%)`,
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl"
+          style={{ background: `rgb(${c.hex} / 0.18)` }}
+        />
+        <div className="relative flex items-center justify-between">
+          <span
+            className="grid h-12 w-12 place-items-center rounded-2xl font-display text-lg font-bold text-black"
+            style={{ background: `rgb(${c.hex})` }}
+          >
+            {p.short.charAt(0)}
+          </span>
+          <span
+            className="rounded-full border px-3 py-1 font-mono text-xs"
+            style={{
+              borderColor: `rgb(${c.hex} / 0.3)`,
+              color: `rgb(${c.hex})`,
+              background: `rgb(${c.hex} / 0.08)`,
+            }}
+          >
+            {c.available ? "Available" : "In progress"}
+          </span>
+        </div>
+        <h3 className="relative mt-6 font-display text-2xl font-semibold text-white">
+          {p.name}
+        </h3>
+        <p className="relative mt-1 font-mono text-sm" style={{ color: `rgb(${c.hex})` }}>
+          “{p.wake}” · addresses you as {p.honorific}
+        </p>
+        <p className="relative mt-4 text-sm leading-relaxed text-slate-400">{p.blurb}</p>
+        <span
+          className="relative mt-6 inline-flex items-center gap-1.5 text-sm font-medium"
+          style={{ color: `rgb(${c.hex})` }}
+        >
+          Preview {p.short}
+          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </button>
+    </Reveal>
   );
 }
 
@@ -301,60 +466,9 @@ function Meet({ setIdentity }: { setIdentity: (i: Identity) => void }) {
         intro="Same engine, different soul. Pick a personality and the entire experience re-themes — cyan for Jarvis, amber for Friday — so two people can each have their own."
       />
       <div className="mt-12 grid gap-5 md:grid-cols-2">
-        {cards.map((c) => {
-          const p = IDENTITIES[c.key];
-          return (
-            <Reveal key={c.key}>
-              <button
-                type="button"
-                onClick={() => setIdentity(c.key)}
-                className="group relative block h-full w-full overflow-hidden rounded-3xl border bg-white/[0.02] p-7 text-left transition-all duration-300 hover:-translate-y-1"
-                style={{ borderColor: `rgb(${c.hex} / 0.3)` }}
-              >
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl"
-                  style={{ background: `rgb(${c.hex} / 0.18)` }}
-                />
-                <div className="relative flex items-center justify-between">
-                  <span
-                    className="grid h-12 w-12 place-items-center rounded-2xl font-display text-lg font-bold text-black"
-                    style={{ background: `rgb(${c.hex})` }}
-                  >
-                    {p.short.charAt(0)}
-                  </span>
-                  <span
-                    className="rounded-full border px-3 py-1 font-mono text-xs"
-                    style={{
-                      borderColor: `rgb(${c.hex} / 0.3)`,
-                      color: `rgb(${c.hex})`,
-                      background: `rgb(${c.hex} / 0.08)`,
-                    }}
-                  >
-                    {c.available ? "Available" : "In progress"}
-                  </span>
-                </div>
-                <h3 className="relative mt-6 font-display text-2xl font-semibold text-white">
-                  {p.name}
-                </h3>
-                <p
-                  className="relative mt-1 font-mono text-sm"
-                  style={{ color: `rgb(${c.hex})` }}
-                >
-                  “{p.wake}” · addresses you as {p.honorific}
-                </p>
-                <p className="relative mt-4 text-sm leading-relaxed text-slate-400">{p.blurb}</p>
-                <span
-                  className="relative mt-6 inline-flex items-center gap-1.5 text-sm font-medium"
-                  style={{ color: `rgb(${c.hex})` }}
-                >
-                  Preview {p.short}
-                  <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </button>
-            </Reveal>
-          );
-        })}
+        {cards.map((c) => (
+          <MeetCard key={c.key} c={c} setIdentity={setIdentity} />
+        ))}
       </div>
     </section>
   );
@@ -469,7 +583,16 @@ function TheHud() {
                   </p>
                 </motion.div>
               </AnimatePresence>
-              <p className="mt-6 font-mono text-xs text-slate-500">
+              <div className="mt-6 flex items-center gap-3">
+                <span
+                  className="shrink-0 font-mono text-[10px] uppercase tracking-widest"
+                  style={{ color: `rgb(${cur.color})` }}
+                >
+                  ● live audio
+                </span>
+                <Waveform color={cur.color} className="h-9 flex-1" />
+              </div>
+              <p className="mt-4 font-mono text-xs text-slate-500">
                 Boots with a sci-fi power-up; powers down with a “TV-off” collapse.
               </p>
             </div>
@@ -598,75 +721,48 @@ function TheInstaller() {
   );
 }
 
+function TechCard({ g, i }: { g: { group: string; items: string[] }; i: number }) {
+  const { ref, onMouseMove } = useGlow<HTMLDivElement>();
+  return (
+    <Reveal delay={i * 0.06}>
+      <div
+        ref={ref}
+        onMouseMove={onMouseMove}
+        className="jx-bd group relative h-full overflow-hidden rounded-2xl border bg-white/[0.02] p-5"
+      >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{
+            background:
+              "radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--j) / 0.12), transparent 60%)",
+          }}
+        />
+        <div className="jx-accent relative flex items-center gap-2 font-mono text-xs uppercase tracking-widest">
+          <span className="jx-dot h-1.5 w-1.5 rounded-full" />
+          {g.group}
+        </div>
+        <ul className="relative mt-4 space-y-2">
+          {g.items.map((it) => (
+            <li key={it} className="flex items-start gap-2 text-sm text-slate-300">
+              <span className="jx-accent font-mono">›</span>
+              {it}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Reveal>
+  );
+}
+
 function UnderTheHood() {
   return (
     <section className="relative mx-auto max-w-6xl px-5 py-24 sm:px-6 sm:py-28">
       <SectionHead kicker="// under the hood" title="Serious machinery." />
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {JARVIS.tech.map((g, i) => (
-          <Reveal key={g.group} delay={i * 0.06}>
-            <div className="jx-bd h-full rounded-2xl border bg-white/[0.02] p-5">
-              <div className="jx-accent flex items-center gap-2 font-mono text-xs uppercase tracking-widest">
-                <span className="jx-dot h-1.5 w-1.5 rounded-full" />
-                {g.group}
-              </div>
-              <ul className="mt-4 space-y-2">
-                {g.items.map((it) => (
-                  <li key={it} className="flex items-start gap-2 text-sm text-slate-300">
-                    <span className="jx-accent font-mono">›</span>
-                    {it}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Reveal>
+          <TechCard key={g.group} g={g} i={i} />
         ))}
-      </div>
-    </section>
-  );
-}
-
-function DownloadSection({ id }: { id: (typeof IDENTITIES)[Identity] }) {
-  return (
-    <section id="about" className="relative px-5 py-28 sm:px-6 sm:py-36">
-      <div className="mx-auto max-w-3xl text-center">
-        <Reveal>
-          <p className="jx-accent font-mono text-xs uppercase tracking-[0.3em]">{"// built, not shipped"}</p>
-        </Reveal>
-        <Reveal delay={0.05}>
-          <h2 className="mt-4 font-display text-4xl font-semibold text-white sm:text-5xl">
-            A personal build, running 24/7.
-          </h2>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <p className="mx-auto mt-4 max-w-md text-slate-400">
-            {id.name} isn&apos;t a public download — it&apos;s a native macOS app I built and run
-            on my own machine, packaged as a signed&nbsp;.dmg with its cinematic installer. Friday
-            is on the way.
-          </p>
-        </Reveal>
-        <Reveal delay={0.2}>
-          <div className="mx-auto mt-10 grid max-w-lg gap-3 sm:grid-cols-3">
-            {JARVIS.requirements.map((r) => (
-              <div key={r.label} className="jx-bd rounded-xl border bg-white/[0.02] p-4">
-                <p className="font-mono text-[11px] uppercase tracking-widest text-slate-500">
-                  {r.label}
-                </p>
-                <p className="mt-1.5 flex items-center justify-center gap-1.5 text-sm text-slate-200">
-                  <Check size={13} className="jx-accent" /> {r.value}
-                </p>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-        <Reveal delay={0.26}>
-          <Link
-            href="/projects/"
-            className="jx-bd mt-9 inline-flex items-center gap-2 rounded-full border bg-white/5 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/10"
-          >
-            <ArrowLeft size={16} /> Back to projects
-          </Link>
-        </Reveal>
       </div>
     </section>
   );
