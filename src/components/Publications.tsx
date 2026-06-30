@@ -7,7 +7,7 @@ export function Publications() {
   return (
     <Section
       id="publications"
-      index="05 / Research"
+      index="06 / Research"
       title="Published & peer-reviewed."
       intro="Two papers presented at the 2023 IEEE International Conference on Intelligent Computing and Research Trends (ICRT)."
     >

@@ -8,7 +8,7 @@ export function Certifications() {
   return (
     <Section
       id="certifications"
-      index="07 / Credentials"
+      index="08 / Credentials"
       title="Certifications."
       intro="Professional certificates from Meta, Google, IBM and more — tap any tile to open the original."
     >
