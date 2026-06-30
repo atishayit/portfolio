@@ -5,12 +5,14 @@ import Link from "next/link";
 import {
   animate,
   motion,
+  useAnimationFrame,
   useInView,
   useMotionValue,
   useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
+  useVelocity,
 } from "framer-motion";
 import { ArrowLeft, ArrowUpRight, ExternalLink } from "lucide-react";
 import { Reveal, RevealGroup } from "../Reveal";
@@ -20,6 +22,129 @@ import { VOLTA } from "@/content/volta";
 
 const V = VOLTA.accent; // amber "r g b"
 const V2 = VOLTA.accent2; // electric blue
+const EASE = [0.22, 1, 0.36, 1] as const;
+const wrap = (min: number, max: number, v: number) => {
+  const r = max - min;
+  return ((((v - min) % r) + r) % r) + min;
+};
+
+/** Mask-and-skew text reveal — each char/word rises from a clipped box. */
+function MaskText({
+  text,
+  by = "word",
+  className = "",
+  delay = 0,
+  stagger = 0.05,
+}: {
+  text: string;
+  by?: "word" | "char";
+  className?: string;
+  delay?: number;
+  stagger?: number;
+}) {
+  const reduce = useReducedMotion();
+  if (reduce) return <span className={className}>{text}</span>;
+  const parts = by === "char" ? Array.from(text) : text.split(" ");
+  return (
+    <motion.span
+      className={`inline-block ${className}`}
+      aria-label={text}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ staggerChildren: stagger, delayChildren: delay }}
+    >
+      {parts.map((p, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          className="inline-block overflow-hidden align-bottom"
+          style={{ paddingBottom: "0.12em", marginBottom: "-0.12em" }}
+        >
+          <motion.span
+            className="inline-block"
+            variants={{
+              hidden: { y: "115%", skewY: 7 },
+              show: { y: 0, skewY: 0, transition: { duration: 0.75, ease: EASE } },
+            }}
+          >
+            {p === " " ? " " : p}
+            {by === "word" && i < parts.length - 1 ? " " : ""}
+          </motion.span>
+        </span>
+      ))}
+    </motion.span>
+  );
+}
+
+/** Pointer-magnetic translate (spring-eased). */
+function useMagnetic(strength = 0.2) {
+  const reduce = useReducedMotion();
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const sx = useSpring(x, { stiffness: 200, damping: 15, mass: 0.4 });
+  const sy = useSpring(y, { stiffness: 200, damping: 15, mass: 0.4 });
+  const onMagMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (reduce) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    x.set((e.clientX - (r.left + r.width / 2)) * strength);
+    y.set((e.clientY - (r.top + r.height / 2)) * strength);
+  };
+  const reset = () => {
+    x.set(0);
+    y.set(0);
+  };
+  return { x: sx, y: sy, onMagMove, reset };
+}
+
+/** An infinite marquee whose speed + direction track scroll velocity. */
+function VelocityMarquee({
+  items,
+  baseVelocity = 3,
+  className = "",
+}: {
+  items: string[];
+  baseVelocity?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  const baseX = useMotionValue(0);
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smooth = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
+  const factor = useTransform(smooth, [0, 1000], [0, 5], { clamp: false });
+  const dir = useRef(1);
+  const x = useTransform(baseX, (v) => `${wrap(-50, 0, v)}%`);
+
+  useAnimationFrame((_, delta) => {
+    if (reduce) return;
+    let moveBy = dir.current * baseVelocity * (delta / 1000);
+    const f = factor.get();
+    if (f < 0) dir.current = -1;
+    else if (f > 0) dir.current = 1;
+    moveBy += dir.current * moveBy * f;
+    baseX.set(baseX.get() + moveBy);
+  });
+
+  return (
+    <div className={`overflow-hidden ${className}`}>
+      <motion.div className="flex w-max flex-nowrap" style={{ x }}>
+        {[...items, ...items].map((it, i) => (
+          <span
+            key={i}
+            className="mx-2 inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 font-mono text-sm text-slate-300"
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: `rgb(${V})` }}
+            />
+            {it}
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
 
 /** A small pulsing "live" dot. */
 function LiveDot() {
@@ -189,34 +314,38 @@ function Kicker({ children }: { children: React.ReactNode }) {
 
 export function VoltaShowcase() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#05070d] text-slate-300">
-      {/* ambient grid + amber glow */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 opacity-[0.5]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed -top-40 left-1/2 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full blur-[130px]"
-        style={{ background: `rgb(${V} / 0.12)` }}
-      />
+    <div className="relative bg-[#05070d] text-slate-300">
+      {/* curtain panel — opaque content that slides up to reveal the footer */}
+      <div className="relative z-10 mb-[16rem] min-h-screen overflow-hidden bg-[#05070d]">
+        {/* ambient grid */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.5]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+        {/* amber glow */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-0 h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/3 rounded-full blur-[130px]"
+          style={{ background: `rgb(${V} / 0.12)` }}
+        />
 
-      <Nav />
+        <Nav />
 
-      <main className="relative mx-auto max-w-6xl px-5 sm:px-6">
-        <Hero />
-        <LiveDemo />
-        <Pipeline />
-        <Model />
-        <Features />
-        <Tech />
-        <Closing />
-      </main>
+        <main className="relative mx-auto max-w-6xl px-5 sm:px-6">
+          <Hero />
+          <LiveDemo />
+          <Pipeline />
+          <Model />
+          <Features />
+          <Tech />
+          <Closing />
+        </main>
+      </div>
 
       <Foot />
     </div>
@@ -316,19 +445,15 @@ function Hero() {
       <Reveal>
         <Kicker>{"// energy forecasting · anomaly detection"}</Kicker>
       </Reveal>
-      <Reveal delay={0.05}>
-        <h1
-          className="mt-5 font-display text-6xl font-bold tracking-tight text-white sm:text-8xl"
-          style={{ textShadow: `0 0 50px rgb(${V} / 0.25)` }}
-        >
-          VOLTA
-        </h1>
-      </Reveal>
-      <Reveal delay={0.1}>
-        <p className="mt-3 font-mono text-sm" style={{ color: `rgb(${V} / 0.85)` }}>
-          {VOLTA.full}
-        </p>
-      </Reveal>
+      <h1
+        className="mt-5 font-display text-6xl font-bold tracking-tight text-white sm:text-8xl"
+        style={{ textShadow: `0 0 50px rgb(${V} / 0.25)` }}
+      >
+        <MaskText text="VOLTA" by="char" stagger={0.07} />
+      </h1>
+      <p className="mt-3 font-mono text-sm" style={{ color: `rgb(${V} / 0.85)` }}>
+        <MaskText text={VOLTA.full} by="word" delay={0.25} stagger={0.035} />
+      </p>
       <Reveal delay={0.15}>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-400">
           {VOLTA.tagline}
@@ -419,7 +544,44 @@ function LiveDemo() {
         </p>
       </Reveal>
 
-      <Reveal delay={0.12} className="mt-8">
+      <LiveEmbed />
+    </section>
+  );
+}
+
+function LiveEmbed() {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start 0.95", "start 0.4"],
+  });
+  const scale = useTransform(scrollYProgress, [0, 1], [0.78, 1]);
+  const opacity = useTransform(scrollYProgress, [0, 1], [0.45, 1]);
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = glowRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    el.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+  return (
+    <div ref={ref} className="mt-8">
+      <motion.div
+        ref={glowRef}
+        onMouseMove={onMove}
+        style={reduce ? undefined : { scale, opacity }}
+        className="relative origin-top will-change-transform"
+      >
+        {/* mouse-reactive glow behind the embed */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-6 rounded-[2.5rem] blur-3xl"
+          style={{
+            background: `radial-gradient(440px circle at var(--mx, 50%) var(--my, 50%), rgb(${V} / 0.2), transparent 65%)`,
+          }}
+        />
         <div className="relative">
           <div
             className="relative overflow-hidden rounded-2xl border bg-black"
@@ -475,12 +637,61 @@ function LiveDemo() {
             </div>
           </div>
         </div>
-      </Reveal>
-    </section>
+      </motion.div>
+    </div>
+  );
+}
+
+function PipelineCard({ s }: { s: (typeof VOLTA.steps)[number] }) {
+  const { x, y, onMagMove, reset } = useMagnetic(0.16);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    onMagMove(e);
+    const el = glowRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    el.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+  return (
+    <motion.div
+      variants={{
+        hidden: { opacity: 0, rotateX: -15, y: 26 },
+        show: { opacity: 1, rotateX: 0, y: 0, transition: { duration: 0.7, ease: EASE } },
+      }}
+      style={{ x, y, transformPerspective: 900 }}
+      onMouseMove={onMove}
+      onMouseLeave={reset}
+    >
+      <div
+        ref={glowRef}
+        className="group relative h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors duration-300 hover:border-white/20"
+      >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{
+            background: `radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgb(${V} / 0.16), transparent 60%)`,
+          }}
+        />
+        <p
+          className="relative font-mono text-xs uppercase tracking-widest"
+          style={{ color: `rgb(${V})` }}
+        >
+          {s.label}
+        </p>
+        <h3 className="relative mt-3 font-display text-xl font-semibold text-white">
+          {s.title}
+        </h3>
+        <p className="relative mt-2 text-sm leading-relaxed text-slate-400">{s.desc}</p>
+        <p className="relative mt-4 font-mono text-xs text-slate-600">{s.tech}</p>
+      </div>
+    </motion.div>
   );
 }
 
 function Pipeline() {
+  const reduce = useReducedMotion();
   return (
     <section className="border-t border-white/5 py-20">
       <Reveal>
@@ -491,31 +702,24 @@ function Pipeline() {
           From real grid data to an in-browser forecast.
         </h2>
       </Reveal>
-      <RevealGroup className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <motion.div
+        className="mt-10 grid gap-4 [perspective:1100px] sm:grid-cols-2 lg:grid-cols-4"
+        initial={reduce ? false : "hidden"}
+        whileInView="show"
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ staggerChildren: 0.1 }}
+      >
         {VOLTA.steps.map((s) => (
-          <Reveal key={s.label}>
-            <Card className="p-6">
-              <p
-                className="font-mono text-xs uppercase tracking-widest"
-                style={{ color: `rgb(${V})` }}
-              >
-                {s.label}
-              </p>
-              <h3 className="mt-3 font-display text-xl font-semibold text-white">
-                {s.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">{s.desc}</p>
-              <p className="mt-4 font-mono text-xs text-slate-600">{s.tech}</p>
-            </Card>
-          </Reveal>
+          <PipelineCard key={s.label} s={s} />
         ))}
-      </RevealGroup>
+      </motion.div>
     </section>
   );
 }
 
 function Model() {
   const sc = VOLTA.model.scorecard;
+  const reduce = useReducedMotion();
   return (
     <section className="border-t border-white/5 py-20">
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
@@ -553,15 +757,22 @@ function Model() {
                     ))}
                   </tr>
                 </thead>
-                <tbody>
+                <motion.tbody
+                  initial={reduce ? false : "hidden"}
+                  whileInView="show"
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ staggerChildren: 0.12 }}
+                >
                   {sc.rows.map((r) => (
-                    <tr
+                    <motion.tr
                       key={r.cells[0]}
+                      variants={{
+                        hidden: { opacity: 0, x: -36 },
+                        show: { opacity: 1, x: 0, transition: { duration: 0.55, ease: EASE } },
+                      }}
                       className="group/row border-t border-white/5 transition-colors duration-200 hover:bg-[rgb(255_176_32/0.09)]"
                       style={
-                        r.highlight
-                          ? { background: `rgb(${V} / 0.06)` }
-                          : undefined
+                        r.highlight ? { background: `rgb(${V} / 0.06)` } : undefined
                       }
                     >
                       {r.cells.map((c, i) => (
@@ -576,12 +787,30 @@ function Model() {
                                 : undefined
                           }
                         >
-                          {c}
+                          {r.highlight && i === 0 && !reduce ? (
+                            <motion.span
+                              className="inline-block"
+                              initial={{ textShadow: "0 0 0px rgb(255 176 32 / 0)" }}
+                              whileInView={{
+                                textShadow: [
+                                  "0 0 0px rgb(255 176 32 / 0)",
+                                  "0 0 18px rgb(255 176 32 / 0.95)",
+                                  "0 0 7px rgb(255 176 32 / 0.5)",
+                                ],
+                              }}
+                              viewport={{ once: true }}
+                              transition={{ delay: 0.9, duration: 1, times: [0, 0.45, 1] }}
+                            >
+                              {c}
+                            </motion.span>
+                          ) : (
+                            c
+                          )}
                         </td>
                       ))}
-                    </tr>
+                    </motion.tr>
                   ))}
-                </tbody>
+                </motion.tbody>
               </table>
             </div>
           </Reveal>
@@ -628,6 +857,7 @@ function Features() {
 }
 
 function Tech() {
+  const items = VOLTA.tech.flatMap((t) => t.items);
   return (
     <section className="border-t border-white/5 py-20">
       <Reveal>
@@ -638,27 +868,16 @@ function Tech() {
           Serious machinery, zero servers.
         </h2>
       </Reveal>
-      <RevealGroup className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {VOLTA.tech.map((t) => (
-          <Reveal key={t.group}>
-            <Card className="p-6">
-              <p
-                className="font-mono text-xs uppercase tracking-widest"
-                style={{ color: `rgb(${V})` }}
-              >
-                {t.group}
-              </p>
-              <ul className="mt-3 space-y-1.5">
-                {t.items.map((it) => (
-                  <li key={it} className="text-sm text-slate-400">
-                    {it}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </Reveal>
-        ))}
-      </RevealGroup>
+      <Reveal delay={0.1}>
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-400">
+          The full stack behind VOLTA — modelling, data, web and in-browser inference.
+          Scroll to spin it up.
+        </p>
+      </Reveal>
+      <div className="mt-10 flex flex-col gap-3">
+        <VelocityMarquee items={items} baseVelocity={2.4} />
+        <VelocityMarquee items={[...items].reverse()} baseVelocity={-2.4} />
+      </div>
     </section>
   );
 }
@@ -710,12 +929,40 @@ function Closing() {
   );
 }
 
+/** Revealed by the curtain: fixed behind the content panel, exposed at the end. */
 function Foot() {
   return (
-    <footer className="relative border-t border-white/5 py-10 text-center">
-      <p className="font-mono text-xs text-slate-600">
-        VOLTA · CNN-BiLSTM energy forecasting · trained offline, served static · 2026
-      </p>
+    <footer className="fixed inset-x-0 bottom-0 z-0 flex h-[16rem] items-center">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-6 text-center">
+        <p
+          className="font-display text-3xl font-bold text-white"
+          style={{ textShadow: `0 0 40px rgb(${V} / 0.3)` }}
+        >
+          VOLTA
+        </p>
+        <p className="max-w-md text-sm text-slate-500">
+          CNN-BiLSTM energy forecasting — trained offline, served static, running in your
+          browser.
+        </p>
+        <div className="flex items-center gap-3">
+          <a
+            href={VOLTA.demo}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-black"
+            style={{ background: `rgb(${V})` }}
+          >
+            Live demo <ArrowUpRight size={14} />
+          </a>
+          <Link
+            href="/projects/"
+            className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white"
+          >
+            <ArrowLeft size={15} /> Projects
+          </Link>
+        </div>
+        <p className="font-mono text-[11px] text-slate-700">© 2026 Atishay Jain</p>
+      </div>
     </footer>
   );
 }
