@@ -27,7 +27,8 @@ const BENTO: Record<number, string> = {
   0: "lg:col-span-2 lg:row-span-2", // Voice-first
   1: "lg:col-span-2", // Runs your Mac
   5: "lg:col-span-2 lg:row-span-2", // Music
-  6: "lg:col-span-2", // Knowledge & chat
+  // Knowledge & chat is a 1×1 tile so the dense grid fills the gap by Startup
+  // ritual instead of leaving empty space.
 };
 
 const loop = (d: number, delay = 0) =>
