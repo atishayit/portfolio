@@ -30,7 +30,7 @@ export function RoleToggle({ size = "sm", className = "" }: RoleToggleProps) {
           <button
             key={id}
             type="button"
-            onClick={() => setRole(id)}
+            onClick={(e) => setRole(id, { x: e.clientX, y: e.clientY })}
             aria-pressed={active}
             className={`relative z-10 cursor-pointer rounded-full font-medium transition-colors duration-300 ${
               lg ? "px-5 py-2.5" : "px-3.5 py-1.5"

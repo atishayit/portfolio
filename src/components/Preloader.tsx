@@ -80,7 +80,9 @@ export function Preloader() {
         <motion.div
           key="preloader"
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-surface"
-          exit={{ y: "-100%" }}
+          initial={{ clipPath: "circle(150% at 50% 50%)" }}
+          animate={{ clipPath: "circle(150% at 50% 50%)" }}
+          exit={{ clipPath: "circle(0% at 50% 50%)" }}
           transition={{ duration: 0.9, ease: EASE }}
         >
           {/* Center: monogram + name rising into view */}
