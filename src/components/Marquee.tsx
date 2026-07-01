@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   motion,
   useAnimationFrame,
@@ -58,6 +58,8 @@ function Row() {
 /** Infinite marquee whose speed + direction track the scroll velocity. */
 export function Marquee() {
   const reduce = useReducedMotion();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const visibleRef = useRef(true);
   const baseX = useMotionValue(0);
   const { scrollY } = useScroll();
   const scrollVelocity = useVelocity(scrollY);
@@ -66,8 +68,17 @@ export function Marquee() {
   const dir = useRef(1);
   const x = useTransform(baseX, (v) => `${wrap(-50, 0, v)}%`);
 
+  // Pause the loop when the marquee is scrolled off screen.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => (visibleRef.current = e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   useAnimationFrame((_, delta) => {
-    if (reduce) return;
+    if (reduce || !visibleRef.current || document.hidden) return;
     let moveBy = dir.current * 2.4 * (delta / 1000);
     const f = factor.get();
     if (f < 0) dir.current = -1;
@@ -78,6 +89,7 @@ export function Marquee() {
 
   return (
     <div
+      ref={wrapRef}
       className="relative overflow-hidden border-y border-hairline bg-surface-raised/30 py-5 sm:py-7"
       role="marquee"
       aria-label="Disciplines and technologies: Full Stack Engineer, Data Scientist, React, TypeScript, Next.js, Python, PyTorch, TensorFlow, Supabase, AWS, Azure, PostgreSQL, Docker, Machine Learning, .NET"
