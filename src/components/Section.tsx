@@ -1,4 +1,14 @@
+"use client";
+
 import type { ReactNode } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+  useVelocity,
+} from "framer-motion";
 import { Reveal } from "./Reveal";
 import { RevealText } from "./RevealText";
 
@@ -13,6 +23,13 @@ interface SectionProps {
 }
 
 export function Section({ id, index, title, intro, children, className }: SectionProps) {
+  const reduce = useReducedMotion();
+  const { scrollY } = useScroll();
+  const velocity = useVelocity(scrollY);
+  const smooth = useSpring(velocity, { damping: 40, stiffness: 300 });
+  // Fast scroll skews the header a few degrees; springs back to 0 at rest.
+  const skewY = useTransform(smooth, [-2500, 0, 2500], [-4, 0, 4], { clamp: true });
+
   return (
     <section
       id={id}
@@ -24,9 +41,12 @@ export function Section({ id, index, title, intro, children, className }: Sectio
             <span className="h-px w-8 bg-accent/60" aria-hidden="true" />
             {index}
           </div>
-          <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl md:text-5xl">
+          <motion.h2
+            style={reduce ? undefined : { skewY }}
+            className="mt-4 origin-left font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl md:text-5xl"
+          >
             <RevealText text={title} />
-          </h2>
+          </motion.h2>
           {intro && (
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted sm:text-lg">
               {intro}

@@ -41,7 +41,7 @@ export function Contact() {
             </a>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Magnetic>
+              <Magnetic radius={100} strength={0.5}>
                 <a
                   href={PERSON.socials.email}
                   className="accent-morph inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-contrast shadow-lg shadow-accent/30 transition-transform duration-200 hover:-translate-y-0.5"

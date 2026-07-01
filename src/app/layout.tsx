@@ -4,6 +4,7 @@ import { Providers } from "@/components/providers";
 import { Preloader } from "@/components/Preloader";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { Cursor } from "@/components/Cursor";
+import { RoleWipe } from "@/components/RoleWipe";
 import { PERSON } from "@/content/data";
 import "./globals.css";
 
@@ -93,6 +94,7 @@ export default function RootLayout({
           <SmoothScroll />
           <Preloader />
           {children}
+          <RoleWipe />
           <Cursor />
         </Providers>
       </body>

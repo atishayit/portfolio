@@ -66,25 +66,20 @@ export function Cursor() {
       style={{ opacity: hidden ? 0 : 1 }}
       className="transition-opacity duration-200"
     >
-      {/* Precise dot */}
+      {/* Blend-difference dot: inverts against whatever's underneath, expands on
+          hover over interactive elements. Follows with a light spring lag. */}
       <motion.div
-        className="accent-morph pointer-events-none fixed left-0 top-0 z-[300] h-2 w-2 rounded-full bg-accent"
-        style={{ x, y, marginLeft: -4, marginTop: -4 }}
-        animate={{ scale: pressed ? 0.6 : hovering ? 0 : 1 }}
-        transition={{ duration: 0.18 }}
+        className="pointer-events-none fixed left-0 top-0 z-[300] h-4 w-4 rounded-full bg-white mix-blend-difference"
+        style={{ x: ringX, y: ringY, marginLeft: -8, marginTop: -8 }}
+        animate={{ scale: pressed ? 0.8 : hovering ? 3.2 : 1 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       />
-      {/* Lagging ring */}
+      {/* Tiny precise core that tracks 1:1. */}
       <motion.div
-        className="accent-morph pointer-events-none fixed left-0 top-0 z-[300] h-9 w-9 rounded-full border border-accent"
-        style={{ x: ringX, y: ringY, marginLeft: -18, marginTop: -18 }}
-        animate={{
-          scale: pressed ? 0.85 : hovering ? 1.7 : 1,
-          opacity: hovering ? 1 : 0.55,
-          backgroundColor: hovering
-            ? "rgb(var(--accent) / 0.12)"
-            : "rgb(var(--accent) / 0)",
-        }}
-        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        className="pointer-events-none fixed left-0 top-0 z-[300] h-1 w-1 rounded-full bg-white mix-blend-difference"
+        style={{ x, y, marginLeft: -2, marginTop: -2 }}
+        animate={{ opacity: hovering ? 0 : 1 }}
+        transition={{ duration: 0.2 }}
       />
     </div>
   );
