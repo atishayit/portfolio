@@ -17,6 +17,7 @@ export function TacticalNetwork() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [count, setCount] = useState<number | null>(null);
   const [color, setColor] = useState("110 145 255");
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -25,7 +26,20 @@ export function TacticalNetwork() {
       return;
     }
     const w = window.innerWidth;
-    setCount(w < 700 ? 70 : w < 1200 ? 110 : 150);
+    setCount(w < 700 ? 55 : w < 1200 ? 85 : 115);
+  }, []);
+
+  // Only run the render loop while the hero is on screen — frees the main
+  // thread (and GPU) once you scroll past it, which kills the scroll stutter.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => setVisible(e.isIntersecting),
+      { threshold: 0.01 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   // Re-read the accent whenever the identity changes (after the wipe swaps it).
@@ -45,12 +59,17 @@ export function TacticalNetwork() {
     >
       {count && count > 0 ? (
         <Canvas
-          dpr={[1, 1.75]}
+          dpr={[1, 1.5]}
           camera={{ position: [0, 0, 15], fov: 55 }}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
           style={{ background: "transparent" }}
         >
-          <Network count={count} mode={role === "fullstack" ? "grid" : "sphere"} colorRGB={color} />
+          <Network
+            count={count}
+            mode={role === "fullstack" ? "grid" : "sphere"}
+            colorRGB={color}
+            visible={visible}
+          />
         </Canvas>
       ) : null}
     </div>
@@ -66,10 +85,12 @@ function Network({
   count,
   mode,
   colorRGB,
+  visible,
 }: {
   count: number;
   mode: "grid" | "sphere";
   colorRGB: string;
+  visible: boolean;
 }) {
   const pointsRef = useRef<THREE.Points>(null);
   const linesRef = useRef<THREE.LineSegments>(null);
@@ -150,14 +171,20 @@ function Network({
   }, [colorRGB, nodeColor]);
 
   const tmp = useMemo(() => new THREE.Vector3(), []);
+  const frameN = useRef(0);
+  const idleN = useRef(0);
   useFrame(() => {
+    // Scrolled past the hero → skip all CPU work (the canvas just draws static).
+    if (!visible) return;
+    frameN.current++;
     const cur = layouts.current;
     const tgt = targetRef.current;
 
     // Project the cursor onto the z = 0 plane.
+    const mouseActive = ndc.current.x < 9000;
     let mx = 9999,
       my = 9999;
-    if (ndc.current.x < 9000) {
+    if (mouseActive) {
       tmp.set(ndc.current.x, ndc.current.y, 0.5).unproject(camera);
       tmp.sub(camera.position).normalize();
       const dist = -camera.position.z / tmp.z;
@@ -165,12 +192,17 @@ function Network({
       my = camera.position.y + tmp.y * dist;
     }
 
-    // Morph (lerp) toward the active layout + cursor repulsion into displayPos.
+    // Morph (lerp) toward the active layout + cursor repulsion; track motion.
+    let moved = 0;
     for (let i = 0; i < count; i++) {
       const ix = i * 3;
-      cur[ix] += (tgt[ix] - cur[ix]) * LERP;
-      cur[ix + 1] += (tgt[ix + 1] - cur[ix + 1]) * LERP;
-      cur[ix + 2] += (tgt[ix + 2] - cur[ix + 2]) * LERP;
+      const dtx = tgt[ix] - cur[ix];
+      const dty = tgt[ix + 1] - cur[ix + 1];
+      const dtz = tgt[ix + 2] - cur[ix + 2];
+      moved += Math.abs(dtx) + Math.abs(dty) + Math.abs(dtz);
+      cur[ix] += dtx * LERP;
+      cur[ix + 1] += dty * LERP;
+      cur[ix + 2] += dtz * LERP;
 
       let ox = 0,
         oy = 0;
@@ -188,51 +220,60 @@ function Network({
       displayPos[ix + 2] = cur[ix + 2];
     }
 
+    // Once settled and the cursor is away, stop uploading buffers entirely —
+    // the last frame keeps drawing (cheap), so the hero costs ~nothing at rest.
+    const active = mouseActive || moved > 0.6;
+    if (active) idleN.current = 0;
+    else idleN.current++;
+    if (idleN.current > 3) return;
+
     const pg = pointsRef.current?.geometry;
     if (pg) (pg.attributes.position as THREE.BufferAttribute).needsUpdate = true;
 
-    // Rebuild proximity lines (brighter near the cursor).
-    let li = 0;
-    const glowR2 = (REPEL * 1.7) * (REPEL * 1.7);
-    for (let i = 0; i < count && li < MAX_LINES; i++) {
-      const ax = displayPos[i * 3],
-        ay = displayPos[i * 3 + 1],
-        az = displayPos[i * 3 + 2];
-      for (let j = i + 1; j < count && li < MAX_LINES; j++) {
-        const bx = displayPos[j * 3],
-          by = displayPos[j * 3 + 1],
-          bz = displayPos[j * 3 + 2];
-        const ddx = ax - bx,
-          ddy = ay - by,
-          ddz = az - bz;
-        const dist2 = ddx * ddx + ddy * ddy + ddz * ddz;
-        if (dist2 > LINK * LINK) continue;
-        const o = li * 6;
-        linePos[o] = ax;
-        linePos[o + 1] = ay;
-        linePos[o + 2] = az;
-        linePos[o + 3] = bx;
-        linePos[o + 4] = by;
-        linePos[o + 5] = bz;
-        const t = 1 - Math.sqrt(dist2) / LINK;
-        const mxd = (ax + bx) * 0.5 - mx;
-        const myd = (ay + by) * 0.5 - my;
-        const near = mxd * mxd + myd * myd < glowR2;
-        const b = near ? 1 : 0.15 + t * 0.35;
-        lineCol[o] = nodeColor.r * b;
-        lineCol[o + 1] = nodeColor.g * b;
-        lineCol[o + 2] = nodeColor.b * b;
-        lineCol[o + 3] = nodeColor.r * b;
-        lineCol[o + 4] = nodeColor.g * b;
-        lineCol[o + 5] = nodeColor.b * b;
-        li++;
+    // Rebuild proximity lines — every frame while active, else every other.
+    if (active || !(frameN.current & 1)) {
+      let li = 0;
+      const glowR2 = (REPEL * 1.7) * (REPEL * 1.7);
+      for (let i = 0; i < count && li < MAX_LINES; i++) {
+        const ax = displayPos[i * 3],
+          ay = displayPos[i * 3 + 1],
+          az = displayPos[i * 3 + 2];
+        for (let j = i + 1; j < count && li < MAX_LINES; j++) {
+          const bx = displayPos[j * 3],
+            by = displayPos[j * 3 + 1],
+            bz = displayPos[j * 3 + 2];
+          const ddx = ax - bx,
+            ddy = ay - by,
+            ddz = az - bz;
+          const dist2 = ddx * ddx + ddy * ddy + ddz * ddz;
+          if (dist2 > LINK * LINK) continue;
+          const o = li * 6;
+          linePos[o] = ax;
+          linePos[o + 1] = ay;
+          linePos[o + 2] = az;
+          linePos[o + 3] = bx;
+          linePos[o + 4] = by;
+          linePos[o + 5] = bz;
+          const t = 1 - Math.sqrt(dist2) / LINK;
+          const mxd = (ax + bx) * 0.5 - mx;
+          const myd = (ay + by) * 0.5 - my;
+          const near = mxd * mxd + myd * myd < glowR2;
+          const b = near ? 1 : 0.15 + t * 0.35;
+          lineCol[o] = nodeColor.r * b;
+          lineCol[o + 1] = nodeColor.g * b;
+          lineCol[o + 2] = nodeColor.b * b;
+          lineCol[o + 3] = nodeColor.r * b;
+          lineCol[o + 4] = nodeColor.g * b;
+          lineCol[o + 5] = nodeColor.b * b;
+          li++;
+        }
       }
-    }
-    const lg = linesRef.current?.geometry;
-    if (lg) {
-      (lg.attributes.position as THREE.BufferAttribute).needsUpdate = true;
-      (lg.attributes.color as THREE.BufferAttribute).needsUpdate = true;
-      lg.setDrawRange(0, li * 2);
+      const lg = linesRef.current?.geometry;
+      if (lg) {
+        (lg.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+        (lg.attributes.color as THREE.BufferAttribute).needsUpdate = true;
+        lg.setDrawRange(0, li * 2);
+      }
     }
   });
 

@@ -42,7 +42,7 @@ export function Section({ id, index, title, intro, children, className }: Sectio
             {index}
           </div>
           <motion.h2
-            style={reduce ? undefined : { skewY }}
+            style={reduce ? undefined : { skewY, willChange: "transform" }}
             className="mt-4 origin-left font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl md:text-5xl"
           >
             <RevealText text={title} />
