@@ -123,11 +123,15 @@ export function Header() {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="glass mx-auto mt-2 max-w-container overflow-hidden rounded-2xl border border-hairline p-3 lg:hidden"
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            style={{ willChange: "transform, opacity" }}
+            // Opaque background (no backdrop-blur) so the open/close animation
+            // stays buttery on phones — animating backdrop-filter is what made
+            // this menu lag.
+            className="mx-auto mt-2 max-w-container overflow-hidden rounded-2xl border border-hairline bg-surface-raised p-3 shadow-xl shadow-black/10 dark:bg-[#0c1017] lg:hidden"
           >
             <nav className="flex flex-col" aria-label="Mobile">
               {NAV_LINKS.map((link) => (

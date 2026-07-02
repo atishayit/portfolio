@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import { Section } from "./Section";
 import { Reveal } from "./Reveal";
+import { AutoSheen } from "./AutoSheen";
 import { IssuerMark } from "./IssuerMark";
 import { CERTIFICATIONS } from "@/content/data";
 
@@ -23,11 +24,12 @@ export function Certifications() {
               href={cert.href ?? "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-hairline bg-surface-raised/40 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5"
+              className="group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-hairline bg-surface-raised/40 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5 [@media(hover:none)]:border-accent/30"
             >
+              <AutoSheen delay={i * 0.06} />
               <span
                 aria-hidden="true"
-                className="accent-morph pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-accent/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+                className="accent-morph pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-accent/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
               />
 
               <div className="relative flex items-start justify-between">

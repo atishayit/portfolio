@@ -1,6 +1,7 @@
 import { ArrowUpRight, FileText } from "lucide-react";
 import { Section } from "./Section";
 import { Reveal } from "./Reveal";
+import { AutoSheen } from "./AutoSheen";
 import { PUBLICATIONS } from "@/content/data";
 
 export function Publications() {
@@ -18,8 +19,14 @@ export function Publications() {
               href={pub.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex h-full flex-col rounded-3xl border border-hairline bg-surface-raised/40 p-6 transition-colors duration-300 hover:border-accent/50"
+              className="group relative isolate flex h-full flex-col overflow-hidden rounded-3xl border border-hairline bg-surface-raised/40 p-6 transition-colors duration-300 hover:border-accent/50 [@media(hover:none)]:border-accent/40"
             >
+              <AutoSheen delay={i * 0.08} />
+              {/* soft accent glow — always visible on touch devices */}
+              <span
+                aria-hidden="true"
+                className="accent-morph pointer-events-none absolute -right-12 -top-12 -z-10 h-32 w-32 rounded-full bg-accent/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+              />
               <div className="flex items-center justify-between">
                 <span className="accent-morph grid h-10 w-10 place-items-center rounded-xl bg-accent/10 text-accent">
                   <FileText size={18} />

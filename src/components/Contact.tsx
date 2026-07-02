@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, Mail, MapPin } from "lucide-react";
 import { Section } from "./Section";
 import { Reveal } from "./Reveal";
+import { AutoSheen } from "./AutoSheen";
 import { Magnetic } from "./Magnetic";
 import { GithubIcon, LinkedinIcon } from "./icons";
 import { PERSON } from "@/content/data";
@@ -29,7 +30,16 @@ export function Contact() {
       title="Let's build something."
       intro="Open to full-stack and data science roles, collaborations, and interesting problems. The fastest way to reach me is email."
     >
-      <Reveal className="accent-morph glass overflow-hidden rounded-4xl p-8 sm:p-12">
+      <Reveal className="accent-morph glass relative isolate overflow-hidden rounded-4xl p-8 sm:p-12">
+        {/* in-view light sweep + a slow breathing glow so the card feels alive
+            on phones (where the magnetic buttons can't react to a cursor) */}
+        <AutoSheen delay={0.15} color="rgb(var(--accent) / 0.12)" />
+        <motion.span
+          aria-hidden="true"
+          className="accent-morph pointer-events-none absolute -right-20 -top-24 -z-10 h-64 w-64 rounded-full bg-accent/20 blur-3xl"
+          animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.95, 1.08, 0.95] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
         <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
           <div>
             <a
@@ -124,9 +134,9 @@ function SocialCard({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-center gap-4 rounded-2xl border border-hairline bg-surface-raised/40 p-4 transition-colors duration-200 hover:border-accent/50"
+      className="group flex items-center gap-4 rounded-2xl border border-hairline bg-surface-raised/40 p-4 transition-colors duration-200 hover:border-accent/50 [@media(hover:none)]:border-accent/40"
     >
-      <span className="accent-morph grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-contrast">
+      <span className="accent-morph grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-contrast [@media(hover:none)]:bg-accent [@media(hover:none)]:text-accent-contrast">
         {children}
       </span>
       <div>

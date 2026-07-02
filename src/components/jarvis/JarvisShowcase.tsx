@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   AnimatePresence,
@@ -26,6 +25,7 @@ import {
 } from "lucide-react";
 import { JarvisVideo } from "./JarvisVideo";
 import { BentoCard } from "./JarvisBento";
+import { HolographicCore } from "./HolographicCore";
 import { JarvisBoot } from "./JarvisBoot";
 import { NeuralField } from "./NeuralField";
 import { JarvisCursor } from "./JarvisCursor";
@@ -33,9 +33,6 @@ import { JarvisTerminal } from "./JarvisTerminal";
 import { Waveform } from "./Waveform";
 import { Reveal } from "@/components/Reveal";
 import { IDENTITIES, JARVIS, type Identity } from "@/content/jarvis";
-
-// Heavy WebGL core — client-only, mounted on md+ (see Hero).
-const JarvisCore = dynamic(() => import("./JarvisCore"), { ssr: false });
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const SPRING = { type: "spring", stiffness: 380, damping: 32 } as const;
@@ -231,17 +228,6 @@ function Nav({ identity, setIdentity }: { identity: Identity; setIdentity: (i: I
 
 function Hero({ identity, setIdentity }: { identity: Identity; setIdentity: (i: Identity) => void }) {
   const id = IDENTITIES[identity];
-  // Mount the WebGL core everywhere except when the user asked for reduced
-  // motion — phones get a lighter particle budget (see JarvisCore) so they
-  // still feel the living core; reduced-motion keeps the static ring/glow.
-  const [showCore, setShowCore] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const u = () => setShowCore(!mq.matches);
-    u();
-    mq.addEventListener("change", u);
-    return () => mq.removeEventListener("change", u);
-  }, []);
   return (
     <section className="relative mx-auto flex min-h-screen max-w-6xl items-center px-5 pb-20 pt-28 sm:px-6">
       <div className="grid w-full items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
@@ -291,52 +277,7 @@ function Hero({ identity, setIdentity }: { identity: Identity; setIdentity: (i: 
         </div>
 
         <Reveal delay={0.1} className="relative mx-auto w-full max-w-md">
-          <div className="relative aspect-square">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-[28%] rounded-full blur-3xl"
-              style={{ background: "rgb(var(--j) / 0.18)" }}
-            />
-            <motion.div
-              aria-hidden="true"
-              className="absolute inset-2 rounded-full border border-dashed"
-              style={{ borderColor: "rgb(var(--j) / 0.2)" }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 38, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.div
-              aria-hidden="true"
-              className="absolute inset-14 rounded-full border"
-              style={{ borderColor: "rgb(var(--j) / 0.12)" }}
-              animate={{ rotate: -360 }}
-              transition={{ duration: 52, repeat: Infinity, ease: "linear" }}
-            />
-            {showCore && <JarvisCore identityKey={identity} />}
-            <span
-              className="absolute left-2 top-2 font-mono text-[10px] uppercase tracking-[0.25em]"
-              style={{ color: "rgb(var(--j) / 0.8)" }}
-            >
-              {"● neural core"}
-            </span>
-            <span
-              className="absolute bottom-2 right-2 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-600"
-            >
-              live
-            </span>
-            {[
-              "left-0 top-0 border-l-2 border-t-2",
-              "right-0 top-0 border-r-2 border-t-2",
-              "bottom-0 left-0 border-b-2 border-l-2",
-              "bottom-0 right-0 border-b-2 border-r-2",
-            ].map((c) => (
-              <span
-                key={c}
-                aria-hidden="true"
-                className={`pointer-events-none absolute h-5 w-5 ${c}`}
-                style={{ borderColor: "rgb(var(--j) / 0.5)" }}
-              />
-            ))}
-          </div>
+          <HolographicCore />
         </Reveal>
       </div>
     </section>
