@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Section } from "./Section";
 import { Reveal } from "./Reveal";
+import { AutoSheen } from "./AutoSheen";
 import { PROJECTS } from "@/content/projects";
 
 /**
@@ -29,10 +30,12 @@ export function ProjectsPreview() {
                 className="group relative block h-full overflow-hidden rounded-3xl border bg-[#04060b] p-7 transition-all duration-300 hover:-translate-y-1.5"
                 style={{ borderColor: `rgb(${accent} / 0.3)` }}
               >
-                {/* corner glow */}
+                {/* in-view light sweep (gives touch devices a lit-up moment) */}
+                <AutoSheen delay={i * 0.1} color={`rgb(${accent} / 0.16)`} />
+                {/* corner glow — hover on desktop, always-on where there's no hover */}
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl transition-opacity duration-500 group-hover:opacity-150"
+                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl transition-opacity duration-500 group-hover:opacity-150 [@media(hover:none)]:opacity-100"
                   style={{ background: `rgb(${accent} / 0.16)` }}
                 />
                 {/* faint grid */}

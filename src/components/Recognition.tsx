@@ -105,7 +105,7 @@ export function Recognition() {
           const Icon = ICONS[award.icon] ?? Trophy;
           return (
             <Reveal key={award.title} delay={i * 0.1}>
-              <div className="group relative h-full overflow-hidden rounded-3xl border border-amber-500/40 bg-amber-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/60 hover:shadow-xl hover:shadow-amber-500/15 dark:border-amber-400/20 dark:bg-amber-400/[0.05] dark:hover:border-amber-400/50 dark:hover:shadow-amber-400/10">
+              <div className="group relative h-full overflow-hidden rounded-3xl border border-amber-500/40 bg-amber-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/60 hover:shadow-xl hover:shadow-amber-500/15 [@media(hover:none)]:border-amber-500/60 [@media(hover:none)]:shadow-xl [@media(hover:none)]:shadow-amber-500/15 dark:border-amber-400/20 dark:bg-amber-400/[0.05] dark:hover:border-amber-400/50 dark:hover:shadow-amber-400/10 dark:[@media(hover:none)]:border-amber-400/40 dark:[@media(hover:none)]:shadow-amber-400/10">
                 {/* Gold corner glow */}
                 <div
                   aria-hidden="true"
