@@ -231,11 +231,13 @@ function Nav({ identity, setIdentity }: { identity: Identity; setIdentity: (i: I
 
 function Hero({ identity, setIdentity }: { identity: Identity; setIdentity: (i: Identity) => void }) {
   const id = IDENTITIES[identity];
-  // Mount the WebGL core on md+ only — phones get the static ring/glow fallback.
+  // Mount the WebGL core everywhere except when the user asked for reduced
+  // motion — phones get a lighter particle budget (see JarvisCore) so they
+  // still feel the living core; reduced-motion keeps the static ring/glow.
   const [showCore, setShowCore] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const u = () => setShowCore(mq.matches);
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const u = () => setShowCore(!mq.matches);
     u();
     mq.addEventListener("change", u);
     return () => mq.removeEventListener("change", u);

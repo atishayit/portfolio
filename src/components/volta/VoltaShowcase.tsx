@@ -723,7 +723,7 @@ function Model() {
   return (
     <section className="border-t border-white/5 py-20">
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-        <div>
+        <div className="min-w-0">
           <Reveal>
             <Kicker>{"// the model"}</Kicker>
           </Reveal>
@@ -739,7 +739,7 @@ function Model() {
           </Reveal>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <Reveal>
             <div className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-shadow duration-300 hover:shadow-[0_22px_60px_-24px_rgb(255_176_32/0.4)]">
               <div className="border-b border-white/10 px-5 py-3">
@@ -747,7 +747,8 @@ function Model() {
                   Model scorecard · {sc.caption}
                 </p>
               </div>
-              <table className="w-full text-left text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[24rem] text-left text-sm">
                 <thead>
                   <tr className="text-slate-500">
                     {sc.headers.map((h) => (
@@ -812,6 +813,7 @@ function Model() {
                   ))}
                 </motion.tbody>
               </table>
+              </div>
             </div>
           </Reveal>
 

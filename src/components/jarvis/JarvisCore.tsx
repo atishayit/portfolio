@@ -6,11 +6,14 @@ import * as THREE from "three";
 /**
  * The JARVIS AI core — a WebGL particle sphere that breathes, rotates, pulses
  * energy and follows the cursor. Reads its colour live from the `--j` identity
- * var (cyan for Jarvis, amber for Friday). Desktop + motion only; the caller
- * renders a CSS glow fallback behind it.
+ * var (cyan for Jarvis, amber for Friday). Runs on phones too, with a lighter
+ * particle budget; the caller renders a CSS glow fallback behind it.
  */
 
-const COUNT = 9000;
+// Fewer particles + lower pixel ratio on phones so the core stays smooth and
+// battery-friendly, while still giving the "living core" feel on touch devices.
+const COUNT_DESKTOP = 9000;
+const COUNT_MOBILE = 4000;
 
 function readJ(el: HTMLElement): THREE.Color {
   const raw = getComputedStyle(el).getPropertyValue("--j").trim();
@@ -76,13 +79,16 @@ export default function JarvisCore({ identityKey }: { identityKey: string }) {
     if (!mount) return;
     mountElForColor.current = mount;
 
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    const COUNT = isMobile ? COUNT_MOBILE : COUNT_DESKTOP;
+
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     } catch {
       return;
     }
-    const pr = Math.min(window.devicePixelRatio || 1, 1.8);
+    const pr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 1.8);
     const size = () => Math.max(1, mount.clientWidth);
     renderer.setPixelRatio(pr);
     renderer.setSize(size(), size());
