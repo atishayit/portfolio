@@ -24,9 +24,11 @@ const J = "var(--j)";
 
 // Bento span per feature index (mic / music get the big tiles).
 const BENTO: Record<number, string> = {
-  0: "lg:col-span-2 lg:row-span-2", // Voice-first
+  // mic/music get a taller (2-row) tile at every size so their mockups aren't
+  // clipped on phones; they also go full-width (2-col) on desktop.
+  0: "row-span-2 lg:col-span-2", // Voice-first
   1: "lg:col-span-2", // Runs your Mac
-  5: "lg:col-span-2 lg:row-span-2", // Music
+  5: "row-span-2 lg:col-span-2", // Music
   // Knowledge & chat is a 1×1 tile so the dense grid fills the gap by Startup
   // ritual instead of leaving empty space.
 };
