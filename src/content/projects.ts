@@ -33,6 +33,8 @@ export interface Project {
   github: string;
   /** Card identity accent as an "r g b" triplet (defaults to JARVIS cyan). */
   accent?: string;
+  /** Concise tech stack for the /projects list rows. */
+  stack?: string[];
   /** Live, embeddable demo URL, if the project has one. */
   demo?: string;
   /** Calm standby loop shown in the hero */
@@ -58,6 +60,7 @@ const JARVIS: Project = {
   status: "Running 24/7",
   platform: "macOS · Apple Silicon",
   accent: "34 211 238", // cyan
+  stack: ["Python", "Claude", "Deepgram", "ElevenLabs", "Supabase", "PyObjC"],
   // TODO(atishay): replace with the real JARVIS repo URL
   github: "https://github.com/atishayit/jarvis",
   heroVideo: { src: "/jarvis/standby.mp4", poster: "/jarvis/standby-poster.jpg" },
@@ -172,6 +175,7 @@ const VOLTA: Project = {
   status: "Live",
   platform: "Web · Static export",
   accent: "255 176 32", // amber
+  stack: ["PyTorch", "CNN-BiLSTM", "ONNX", "Next.js", "Open-Meteo"],
   demo: "https://volta-virid.vercel.app",
   github: "https://github.com/atishayit/volta",
   heroVideo: { src: "", poster: "/volta/hero.png" },
