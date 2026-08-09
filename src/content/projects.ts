@@ -188,7 +188,32 @@ const VOLTA: Project = {
   tech: [],
 };
 
-export const PROJECTS: Project[] = [JARVIS, VOLTA];
+// Index-card data only — Tempo's showcase page is driven by src/content/tempo.ts.
+const TEMPO: Project = {
+  slug: "tempo",
+  name: "TEMPO",
+  full: "Work, Study & Money — One Life Manager",
+  tagline:
+    "A local-first Android app for students who work: award pay calculated to the cent, PAYG withholding worked out, assignments synced live from OnTrack, and alarms that actually get you to your shift.",
+  summary:
+    "A personal life manager for students who work. Tempo turns a casual retail roster, ABN freelance work and a full trimester of assignments into one picture — pay costed against the actual award, tax withheld the way an employer does it, and deadlines synced from OnTrack. Runs entirely on the phone: no account, no server, nothing leaves the device.",
+  year: "2026",
+  status: "v1.10.0",
+  platform: "Android · Offline-first",
+  accent: "167 139 250", // violet
+  stack: ["Flutter", "Dart", "drift/SQLite", "Riverpod", "Material 3"],
+  // The `lifeos` repo is private — no code link (a private URL 404s for visitors).
+  github: "",
+  heroVideo: { src: "", poster: "/tempo/dark/tempo-home.png" },
+  bootVideo: { src: "", poster: "/tempo/dark/tempo-home.png" },
+  bootLog: [],
+  steps: [],
+  showcase: [],
+  features: [],
+  tech: [],
+};
+
+export const PROJECTS: Project[] = [JARVIS, VOLTA, TEMPO];
 
 export function getProject(slug: string): Project | undefined {
   return PROJECTS.find((p) => p.slug === slug);
